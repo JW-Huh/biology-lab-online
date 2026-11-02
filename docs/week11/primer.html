@@ -21,7 +21,7 @@ svg.explain text { font-family: "Noto Sans KR", sans-serif; }
 .seqbox pre { font: 13px/1.5 var(--font-mono); margin: 0; white-space: pre; }
 .fullseq { overflow: auto; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 10px 12px; }
 .fullseq pre { font: 12.5px/1.5 var(--font-mono); margin: 0; white-space: pre; }
-.fullseq .num { color: #9aa6b4; }
+.fullseq .num { color: #9aa6b4; -webkit-user-select: none; user-select: none; }
 .fullseq .stop { background: var(--red-soft); color: var(--red); font-weight: 700; }
 .fullseq .sA { background: #e3edfb; } .fullseq .sB { background: #e0f4ec; }
 .fullseq .aaA { color: #17458c; font-weight: 700; } .fullseq .aaB { color: #1d6b52; font-weight: 700; }
@@ -124,6 +124,7 @@ svg.gel text { font-family: "Noto Sans KR", sans-serif; }
       <li>위에서 정한 범위를 떼어 온 것입니다. 핵산 아래에 <b>번역된 아미노산</b>을 코돈에 맞춰 함께 보여 줍니다.</li>
       <li>왼쪽 번호는 <b>이 조각 안에서의 번호</b>이고, 오른쪽 괄호는 <b>원래 수용체에서의 아미노산 번호</b>입니다.</li>
       <li>여기 있는 것은 조각 자체의 서열뿐입니다. 꼬리는 여러분이 프라이머에 붙이는 것이므로 들어 있지 않습니다.</li>
+      <li>서열을 끄는 동안 <b>고른 길이</b>가 함께 뜹니다. 프라이머 길이를 맞출 때 보세요.</li>
     </ul>
     <div class="navrow">
       <label for="fsel">조각</label>
@@ -255,6 +256,7 @@ svg.gel text { font-family: "Noto Sans KR", sans-serif; }
 <script src="dna.js"></script>
 <script src="receptors.js"></script>
 <script src="clone.js"></script>
+<script src="selcount.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -451,7 +453,7 @@ svg.gel text { font-family: "Noto Sans KR", sans-serif; }
         ? '<span class="' + cls + '">' + chunk.slice(0, -3) + '</span><span class="stop">' + chunk.slice(-3) + '</span>'
         : '<span class="' + cls + '">' + chunk + '</span>';
       out += '<span class="num">' + String(line + 1).padStart(5, ' ') + '</span>  ' + ntBody + '  <span class="num">' + end + '</span>\n';
-      out += '<span class="num">     </span>  <span class="' + aacls + '">' + aaRow + '</span>  <span class="num">(' + (isB ? 'CD3ζ' : 'TLR5') + ' ' + aaFrom + '–' + (aaFrom + n - 1) + ' aa)</span>\n\n';
+      out += '<span class="num">     </span>  <span class="aa ' + aacls + '">' + aaRow + '</span>  <span class="num">(' + (isB ? 'CD3ζ' : 'TLR5') + ' ' + aaFrom + '–' + (aaFrom + n - 1) + ' aa)</span>\n\n';
     }
     $('fullseq').querySelector('pre').innerHTML = out;
     $('fragfig').innerHTML = fragFigure(which);
@@ -822,6 +824,7 @@ svg.gel text { font-family: "Noto Sans KR", sans-serif; }
     });
   })();
   C.attachGrip($('fullseq'), 180);
+  SELCOUNT.watch($('fullseq'));
 })();
 </script>
 </body>

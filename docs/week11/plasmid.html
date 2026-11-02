@@ -157,6 +157,7 @@ details.panel > summary + * { margin-top: 12px; }
 <script src="receptors.js"></script>
 <script src="puc19.js"></script>
 <script src="clone.js"></script>
+<script src="selcount.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -473,6 +474,8 @@ details.panel > summary + * { margin-top: 12px; }
   /* 상자 아래를 끌어 높이 조절 */
   C.attachGrip($('zoom'), 140);
   C.attachGrip($('fullSeq'), 160);
+  SELCOUNT.watch($('zoom'));
+  SELCOUNT.watch($('fullSeq'));
 })();
 </script>
 </body>

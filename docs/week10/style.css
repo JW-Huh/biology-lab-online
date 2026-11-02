@@ -88,3 +88,13 @@ textarea { resize: vertical; min-height: 96px; }
 
 .mono { font-family: var(--font-mono); }
 footer.foot { margin-top: 40px; font-size: 13px; color: var(--ink-soft); }
+
+/* 서열을 끌어 고를 때 길이를 띄우는 쪽지 */
+.selcount {
+  position: fixed; z-index: 60; display: none; pointer-events: none;
+  transform: translateX(-50%);
+  background: #26354a; color: #fff;
+  font: 700 12.5px/1 var(--font-body); letter-spacing: .2px;
+  padding: 6px 9px; border-radius: 8px; white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(15, 25, 40, .28);
+}

@@ -86,6 +86,7 @@ table.prog td.m { font-family: var(--font-mono); white-space: nowrap; }
 </div>
 
 <script src="dna.js"></script>
+<script src="selcount.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -179,6 +180,8 @@ table.prog td.m { font-family: var(--font-mono); white-space: nowrap; }
     function sel() { var rg = document.createRange(); rg.selectNodeContents($('amp')); var w = getSelection(); w.removeAllRanges(); w.addRange(rg); b.textContent = 'Ctrl+C'; }
     try { navigator.clipboard.writeText(txt).then(function () { b.textContent = '복사됨'; }, sel); } catch (x) { sel(); }
   });
+
+  SELCOUNT.watch($('seq'));
 })();
 </script>
 </body>

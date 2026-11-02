@@ -90,6 +90,7 @@ table.t td.m { font-family: var(--font-mono); font-size: 13.5px; white-space: no
 </div>
 
 <script src="dna.js"></script>
+<script src="selcount.js"></script>
 <script src="example-hbb.js"></script>
 <script>
 (function () {
@@ -183,6 +184,8 @@ table.t td.m { font-family: var(--font-mono); font-size: 13.5px; white-space: no
     $('m').value = EXAMPLE_HBB.mrna; $('g').value = EXAMPLE_HBB.gdna;
     run();
   });
+
+  SELCOUNT.watch($('seq'));
 })();
 </script>
 </body>
