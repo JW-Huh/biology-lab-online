@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&a.host&&a.host!==location.host){a.target='_blank';a.rel='noopener';}});</script>
+<title>엑손 찾기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin-top: 12px; }
+@media (max-width: 560px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.box { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: #fbfcfe; }
+.box .k { font-size: 12.5px; color: var(--ink-soft); }
+.box .v { font: 700 18px/1.3 var(--font-mono); margin-top: 2px; }
+.box .s { font-size: 13px; color: var(--ink-soft); }
+table.t { border-collapse: collapse; width: 100%; font-size: 14.5px; margin-top: 10px; }
+table.t td, table.t th { border-bottom: 1px solid var(--line); padding: 7px 10px; text-align: left; }
+table.t th { background: #f6f8fb; font-size: 13px; color: var(--ink-soft); }
+table.t td.m { font-family: var(--font-mono); font-size: 13.5px; white-space: nowrap; }
+.map { display: flex; height: 26px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); margin-top: 12px; }
+.map span { display: block; height: 100%; }
+.map .ex { background: #1f5fbf; } .map .in { background: #e7ecf3; }
+.res-list { display: grid; gap: 8px; margin-top: 12px; }
+.msg.warn { background: #fdf3d8; color: #7a5a00; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; margin: 10px 0; }
+.legend i { display: inline-block; width: 16px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
+.seqbox { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 10px 12px; }
+.seq { font: 13px/1.6 var(--font-mono); white-space: pre; margin: 0; }
+.seq .ln { color: #9aa6b4; }
+.e1 { background: #e6effb; } .e2 { background: #fff1b8; } .un { background: #f3f3f3; color: #9aa6b4; }
+.jx { border-left: 2.5px solid var(--red); margin-left: -2.5px; }
+.c-f { background: var(--blue); color: #fff; font-weight: 700; }
+.c-r { background: var(--mint); color: #fff; font-weight: 700; }
+.steps { margin: 0; padding-left: 1.2em; font-size: 14.5px; }
+.steps li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home" href="index.html"><img src="chacha.png" alt="">프라이머 설계 실습</a>
+    <nav class="nav"><a href="pinball.html">유전자 핀볼</a><a href="align.html" aria-current="page">엑손 찾기</a><a href="revcomp.html">역상보</a><a href="tm.html">Tm 계산기</a><a href="viewer.html">서열 뷰어</a><a href="check.html">프라이머 점검</a><a href="pcr.html">PCR 시뮬레이션</a><a href="score.html">비교평가</a></nav>
+  </div>
+
+  <h1>엑손 찾기</h1>
+  <p class="lead">mRNA 서열과 유전체(gDNA) 서열을 맞대어 엑손(exon)과 인트론(intron)을 찾고, 엑손 경계 앞뒤 서열을 보여 줍니다. 프라이머를 어느 경계에 걸칠지 여기서 고릅니다.</p>
+
+  <section class="panel">
+    <div class="grid" style="margin-top:0">
+      <div><label class="field" for="m">① mRNA 서열(NM_ FASTA)</label><textarea id="m" spellcheck="false" style="min-height:110px"></textarea></div>
+      <div><label class="field" for="g">② gDNA 서열(유전자 구간 FASTA)</label><textarea id="g" spellcheck="false" style="min-height:110px"></textarea></div>
+    </div>
+    <div class="row" style="margin-top:14px"><button class="btn" id="go" type="button">엑손 찾기</button><button class="btn ghost" id="ex" type="button">HBB 예시 넣기</button></div>
+    <div id="err" class="msg err" hidden></div>
+    <div id="notes" class="res-list"></div>
+  </section>
+
+  <section class="panel" id="out" hidden>
+    <h2>요약</h2>
+    <div class="sum" id="sum"></div>
+    <div class="map" id="map" title="gDNA 위 엑손(파랑)과 인트론(회색)"></div>
+    <p class="hint">gDNA 전체를 한 줄로 놓았을 때 엑손(파랑)과 인트론(회색)의 위치와 길이 비율</p>
+
+    <table class="t" id="tbl"></table>
+    <div class="row" style="margin-top:8px"><button class="btn small" id="copyJ" type="button">mRNA 엑손 경계 복사</button><span class="hint" id="jtxt" style="margin:0"></span></div>
+
+    <h2 style="margin-top:22px">경계 주변 서열</h2>
+    <div style="overflow-x:auto"><table class="t" id="jctx"></table></div>
+    <p class="hint">mRNA 윗가닥(5′→3′) 서열입니다. | 가 엑손 경계입니다. 경계에 걸치는 Forward는 이 서열을 그대로, Reverse는 역상보로 바꿔 씁니다.</p>
+
+
+    <h2 style="margin-top:22px">mRNA 위의 엑손</h2>
+    <div class="legend">
+      <span><i class="e1"></i>홀수 엑손</span><span><i class="e2"></i>짝수 엑손</span><span><i style="border-left:2.5px solid var(--red); width:0; border-radius:0"></i> 엑손 경계</span><span><i class="un"></i>gDNA에 못 맞춤</span>
+    </div>
+    <div class="seqbox"><pre class="seq" id="seq"></pre></div>
+  </section>
+
+  <section class="panel">
+    <h2>서열은 어디서 구하나요?</h2>
+    <p style="margin:0 0 8px">핀볼 결과의 <b>mRNA 보기</b>(FASTA 화면)와 <b>gDNA 보기(FASTA)</b>에서 각각 전부 복사합니다. gDNA는 유전자 읽는 방향으로 정리되어 나옵니다. 핀볼 밖의 유전자는 <a href="https://www.ncbi.nlm.nih.gov/gene/">NCBI Gene</a> 페이지의 <b>Genomic regions, transcripts, and products</b> 그림 오른쪽 위 <b>Go to nucleotide: FASTA</b>에서 받습니다.</p>
+    <p class="hint">이 도구는 두 서열에서 똑같은 16 염기 조각을 찾아 이어 붙이고, 경계 바로 옆 염기가 양쪽 어디에나 맞을 때는 인트론이 GT로 시작해 AG로 끝나는 자리로 경계를 정합니다. 핀볼의 8개 유전자는 모두 NCBI 레코드의 exon 경계와 같게 나옵니다. 같은 비교를 NCBI <a href="https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch&PROGRAM=blastn&BLAST_SPEC=blast2seq&LINK_LOC=align2seq">BLAST (Align two sequences)</a>로 할 수 있고, mRNA–유전체 전용 정렬은 <a href="https://www.ncbi.nlm.nih.gov/sutils/splign/splign.cgi">Splign</a>입니다. NCBI 레코드의 exon 위치도 Splign으로 만든 것입니다.</p>
+  </section>
+
+  <footer class="foot">모든 계산은 이 브라우저 안에서만 이루어지고, 입력한 서열은 어디에도 전송되지 않습니다.</footer>
+</div>
+
+<script src="dna.js"></script>
+<script src="example-hbb.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var WIDTH = 60, state = null;
+  function fail(msg) { $('err').innerHTML = msg; $('err').hidden = false; $('out').hidden = true; }
+  function note(cls, html) { var d = document.createElement('div'); d.className = 'msg ' + cls; d.innerHTML = html; $('notes').appendChild(d); }
+  function box(k, v, s) { return '<div class="box"><div class="k">' + k + '</div><div class="v">' + v + '</div>' + (s ? '<div class="s">' + s + '</div>' : '') + '</div>'; }
+  function n(x) { return x.toLocaleString(); }
+
+  var exonOf = DNA.exonOf;
+
+  function run() {
+    $('notes').innerHTML = '';
+    var M = DNA.clean($('m').value), G = DNA.clean($('g').value);
+    var e = DNA.check(M); if (e) return fail('mRNA: ' + e);
+    e = DNA.check(G); if (e) return fail('gDNA: ' + e);
+    if (G.length < M.length) return fail('gDNA 서열(' + n(G.length) + ' bp)이 mRNA(' + n(M.length) + ' bp)보다 짧아요. 유전자 구간 전체를 가져왔는지 확인하세요.');
+    if (G.length > 400000) return fail('gDNA 서열이 너무 길어요(40만 bp 초과). 유전자 구간만 가져오세요.');
+    $('err').hidden = true;
+
+    var A = DNA.exonAlign(M, G), flipped = A.flipped;
+    G = A.G;
+    if (flipped) note('info', 'gDNA가 반대 방향이어서 역상보로 뒤집어 맞췄어요. 아래 gDNA 위치는 뒤집은 서열 기준입니다.');
+    var ex = A.exons;
+    if (!ex.length) return fail('mRNA와 gDNA에서 같은 조각을 찾지 못했어요. 같은 유전자의 서열인지 확인하세요.');
+    if (A.cover < 0.9) note('warn', 'mRNA의 ' + Math.round((1 - A.cover) * 100) + '%는 gDNA에 맞추지 못했어요. gDNA 구간이 유전자 전체를 덮지 않거나(앞뒤 UTR까지), 다른 transcript variant일 수 있습니다.');
+
+    var introns = [];
+    for (var i = 1; i < ex.length; i++) introns.push(ex[i].gs - ex[i - 1].ge - 1);
+    var intronSum = introns.reduce(function (a, b) { return a + b; }, 0);
+
+    // 요약
+    $('sum').innerHTML = box('엑손', ex.length + '개', '인트론 ' + introns.length + '개, 합 ' + n(intronSum) + ' bp') +
+      box('mRNA', n(M.length) + ' bp', 'gDNA에 맞춘 비율 ' + Math.round(A.cover * 100) + '%') +
+      box('gDNA', n(G.length) + ' bp', '엑손 ' + n(ex[0].gs + 1) + '–' + n(ex[ex.length - 1].ge + 1));
+
+    // gDNA 위 지도
+    var map = '';
+    function seg(cls, len, title) { if (len > 0) map += '<span class="' + cls + '" style="width:' + (len / G.length * 100) + '%" title="' + title + '"></span>'; }
+    seg('in', ex[0].gs, '앞쪽 ' + n(ex[0].gs) + ' bp');
+    ex.forEach(function (b, k) { seg('ex', b.ge - b.gs + 1, '엑손 ' + (k + 1) + ': ' + n(b.ge - b.gs + 1) + ' bp'); if (k < introns.length) seg('in', introns[k], '인트론 ' + (k + 1) + ': ' + n(introns[k]) + ' bp'); });
+    seg('in', G.length - 1 - ex[ex.length - 1].ge, '뒤쪽');
+    $('map').innerHTML = map;
+
+    // 표
+    var t = '<tr><th>엑손</th><th>mRNA 위치</th><th>gDNA 위치</th><th>길이</th><th>다음 인트론</th></tr>';
+    ex.forEach(function (b, k) {
+      t += '<tr><td><b>' + (k + 1) + '</b></td><td class="m">' + n(b.ms + 1) + '–' + n(b.me + 1) + '</td><td class="m">' + n(b.gs + 1) + '–' + n(b.ge + 1) + '</td><td class="m">' + n(b.me - b.ms + 1) + ' bp</td><td class="m">' + (k < introns.length ? n(introns[k]) + ' bp' : '—') + '</td></tr>';
+    });
+    $('tbl').innerHTML = t;
+    var jx = ex.slice(0, -1).map(function (b) { return b.me + 1; });
+    $('jtxt').textContent = jx.length ? '경계(앞 엑손의 마지막 염기): ' + jx.join(', ') : '엑손이 하나뿐이에요';
+    var jc = '<tr><th>경계</th><th>mRNA 위치</th><th>앞 엑손 끝 25 nt | 뒤 엑손 시작 25 nt</th></tr>';
+    ex.slice(0, -1).forEach(function (b, k) {
+      var p = b.me + 1, L = M.substring(Math.max(0, p - 25), p), Rr = M.substring(p, p + 25);
+      jc += '<tr><td>엑손 ' + (k + 1) + ' | ' + (k + 2) + '</td><td class="m">' + n(p) + ' | ' + n(p + 1) + '</td><td class="m"><span class="' + (k % 2 ? 'e2' : 'e1') + '">' + L + '</span><b style="color:var(--red)">|</b><span class="' + (k % 2 ? 'e1' : 'e2') + '">' + Rr + '</span><br><span class="hint">' + n(Math.max(1, p - 24)) + '–' + n(p) + ' | ' + n(p + 1) + '–' + n(Math.min(M.length, p + 25)) + '</span></td></tr>';
+    });
+    $('jctx').innerHTML = ex.length > 1 ? jc : '<tr><td>엑손이 하나뿐이라 경계가 없습니다.</td></tr>';
+    $('copyJ').onclick = function () { var b = this; try { navigator.clipboard.writeText(jx.join(', ')).then(function () { b.textContent = '복사됨'; }); } catch (x) {} };
+
+    state = { M: M, ex: ex };
+
+    draw();
+    $('out').hidden = false;
+  }
+
+  function draw() {
+    var s = state, M = s.M, ex = s.ex, pad = String(M.length).length, out = [];
+    var cls = new Array(M.length), jx = {};
+    for (var i = 0; i < M.length; i++) cls[i] = 'un';
+    ex.forEach(function (b, k) { for (var i = b.ms; i <= b.me; i++) cls[i] = k % 2 ? 'e2' : 'e1'; if (k > 0) jx[b.ms] = true; });
+    for (var a = 0; a < M.length; a += WIDTH) {
+      var b = Math.min(a + WIDTH, M.length), html = '', cur = null, buf = '';
+      for (var i = a; i < b; i++) {
+        var c = cls[i];
+        var key = c + (jx[i] ? ' jx' : '');
+        if (key !== cur || jx[i]) { if (buf) html += '<span class="' + cur + '">' + buf + '</span>'; cur = key; buf = ''; }
+        buf += M[i] + ((i - a) % 10 === 9 && i < b - 1 ? ' ' : '');
+        if (jx[i]) { html += '<span class="' + cur + '">' + buf + '</span>'; buf = ''; cur = c; }
+      }
+      if (buf) html += '<span class="' + cur + '">' + buf + '</span>';
+      out.push('<span class="ln">' + String(a + 1).padStart(pad) + '  </span>' + html);
+    }
+    $('seq').innerHTML = out.join('\n');
+  }
+
+  $('go').addEventListener('click', run);
+  $('ex').addEventListener('click', function () {
+    if (!window.EXAMPLE_HBB) return;
+    $('m').value = EXAMPLE_HBB.mrna; $('g').value = EXAMPLE_HBB.gdna;
+    run();
+  });
+})();
+</script>
+</body>
+</html>

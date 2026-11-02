@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&a.host&&a.host!==location.host){a.target='_blank';a.rel='noopener';}});</script>
+<title>연결 PCR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { border-bottom: 1px solid var(--line); padding: 7px 10px; text-align: left; }
+th { background: #f6f8fb; font-size: 12.5px; color: var(--ink-soft); }
+td.m, th.m { font-family: var(--font-mono); white-space: nowrap; }
+.prog { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 12px; }
+input[type=number] { font: 15px var(--font-mono); padding: 9px 10px; border: 1.5px solid var(--line); border-radius: 10px; background: #fbfcfe; width: 100%; }
+.seqbox { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 10px 12px; margin-top: 10px; }
+.seqbox pre { font: 13px/1.5 var(--font-mono); margin: 0; white-space: pre; }
+.hiA { background: #d9e8fb; } .hiB { background: #d8f0e6; } .hiOv { background: #fff1b8; } .hiSite { background: #ffd9d6; font-weight: 700; }
+svg.gel2 { width: 100%; height: auto; display: block; }
+svg.gel2 text { font-family: "Noto Sans KR", sans-serif; }
+.gelwrap { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 720px) { .gelwrap { grid-template-columns: minmax(0, 1fr); } }
+.tube { border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; background: #fbfcfe; margin-top: 10px; }
+.tube.filled { border-color: var(--mint); background: var(--mint-soft); }
+.fstage { background: #fbfcfe; border: 1.5px solid var(--line); border-radius: 14px; padding: 10px; }
+.fstage svg { width: 100%; height: auto; display: block; }
+.fstage svg text { font-family: "Noto Sans KR", sans-serif; }
+.fsubs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.fsubs button { font: 700 12.5px var(--font-body); border: 1.5px solid var(--line); background: #fff; color: var(--ink-soft); border-radius: 10px; padding: 6px 12px; cursor: pointer; }
+.fsubs button[aria-current="true"] { background: #fdf3d6; border-color: var(--yellow); color: #8a6d00; }
+@keyframes fsFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fsSplit { from { transform: translateY(0); opacity: .4; } to { transform: none; opacity: 1; } }
+.fs-fade { animation: fsFade 1s ease both; }
+.fs-split { animation: fsSplit 1.1s ease both; }
+.fd1 { animation-delay: .4s; } .fd2 { animation-delay: .9s; } .fd3 { animation-delay: 1.4s; }
+.cutbar { margin-top: 10px; font-size: 14px; }
+.tube.wrong { border-color: var(--red); background: var(--red-soft); }
+svg.gel2 { touch-action: none; user-select: none; }
+.chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 700; margin-right: 4px; }
+.chip.ok { background: var(--mint-soft); color: #1d6b52; }
+.chip.no { background: var(--red-soft); color: var(--red); }
+.step { border-left: 4px solid var(--blue); padding-left: 12px; margin: 0 0 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home" href="index.html"><img src="chacha.png" alt="">11주차 · 도메인 교환 클로닝</a>
+    <nav class="nav"><a href="plasmid.html">플라스미드</a><a href="domain.html">도메인 지도</a><a href="primer.html">설계 및 1차 PCR</a><a href="enzyme.html">연결 PCR 프라이머</a><a href="sew.html" aria-current="page">연결 PCR</a><a href="clone.html">클로닝</a></nav>
+  </div>
+
+  <h1>연결 PCR</h1>
+  <p class="lead">젤에서 잘라낸 두 조각을 <b>서로 이어 붙이고</b>, 양 끝 프라이머로 늘려 완성된 키메라를 만듭니다. 이 방법을 overlap extension PCR이라고 부릅니다.</p>
+
+  <section class="panel">
+    <h2>준비물 확인</h2>
+    <div id="have"></div>
+    <p class="hint">1차 PCR 산물을 젤에서 잘라 정제한 이유가 여기서 드러납니다. 정제하지 않으면 1차 프라이머와 원래 cDNA가 그대로 남아 있어서, 다음 반응에서 엉뚱한 산물이 잔뜩 생깁니다.</p>
+  </section>
+
+  <section class="panel">
+    <h2>1단계 · 프라이머 없이 이어 붙이기</h2>
+    <p class="step" style="margin-top:0">두 조각을 한 통에 넣고 <b>프라이머 없이</b> 돌립니다. 겹치는 부분끼리 서로를 붙잡고, 서로가 서로의 프라이머가 되어 빈 쪽을 채웁니다.</p>
+    <ul class="hint" style="margin-top:0;padding-left:1.2em">
+      <li>결합 온도를 한 값으로 정하지 않습니다. 변성시킨 뒤 <b>그대로 두어 천천히 식힙니다.</b> 그러면 겹치는 부분이 결합하기 좋은 온도 구간을 반드시 지나갑니다.</li>
+      <li>식는 동안 두 조각이 짝을 찾고, 이어서 <b>한 번의 긴 연장</b>으로 서로를 주형 삼아 빈 쪽을 채웁니다.</li>
+      <li>이 단계에는 프라이머를 넣지 않습니다. 두 조각이 서로의 프라이머 역할을 합니다.</li>
+      <li>여기서 여러분이 정할 것은 <b>연장 시간</b>입니다. 두 조각을 합친 길이를 한 번에 끝까지 채울 만큼 넉넉히 주어야 합니다.</li>
+      <li>아래 단추를 눌러 세 단계에서 무슨 일이 일어나는지 확인하세요.</li>
+    </ul>
+    <div class="fsubs" id="fsubs"></div>
+    <div class="fstage" id="fstage"></div>
+    <p class="hint" id="fcap" style="margin-top:8px"></p>
+    <div class="prog" style="margin-top:16px">
+      <div><label class="field" for="denT">변성 온도 (°C)</label><input type="number" id="denT" min="80" max="99" value="95"></div>
+      <div><label class="field" for="denS">변성 시간 (초)</label><input type="number" id="denS" min="5" max="300" value="60"></div>
+      <div><label class="field" for="extT">연장 온도 (°C)</label><input type="number" id="extT" min="50" max="80" value="72"></div>
+      <div><label class="field" for="hold">연장 시간 (초)</label><input type="number" id="hold" min="10" max="300" placeholder=""></div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="fuse" type="button">이어 붙이기</button></div>
+    <div id="fuseOut"></div>
+  </section>
+
+  <section class="panel" id="amp" hidden>
+    <h2>2단계 · 양 끝 프라이머로 늘리기</h2>
+    <p class="step" style="margin-top:0">이어 붙인 통에 <b>바로</b> 바깥 프라이머를 넣습니다. 중간에 정제하지 않습니다. 이 프라이머에는 제한효소 자리가 달려 있어서, 늘어난 산물의 양 끝에 그 자리가 새겨집니다.</p>
+    <div class="tbl-wrap"><table id="opTable"></table></div>
+    <div class="prog" style="margin-top:14px">
+      <div><label class="field" for="ta2">결합 온도 (°C)</label><input type="number" id="ta2" min="40" max="72" placeholder=""></div>
+      <div><label class="field" for="ext2">연장 시간 (초)</label><input type="number" id="ext2" min="10" max="900" placeholder=""></div>
+      <div><label class="field" for="cyc2">사이클 수</label><input type="number" id="cyc2" min="10" max="45" value="30"></div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="run2" type="button">PCR 돌리기</button></div>
+    <div id="ampOut"></div>
+  </section>
+
+  <section class="panel" id="fin" hidden>
+    <h2>3단계 · 최종 산물 확인과 정제</h2>
+    <ul class="hint" style="margin-top:0;padding-left:1.2em">
+      <li>이 방법은 원하는 것 말고도 여러 산물이 함께 생깁니다. 젤에서 필요한 것만 골라내야 합니다.</li>
+      <li>레인 위에서 <b>마우스를 끌어</b> 잘라낼 구간을 고르고 <b>잘라내기</b>를 누르세요.</li>
+      <li>어느 띠를 잘라야 할지는 <b>직접 판단하세요.</b> 두 조각의 길이와 겹친 길이를 알고 있으니 이어 붙은 것의 크기를 셈할 수 있습니다. 래더와 견주어 그 높이를 찾습니다.</li>
+    </ul>
+    <div class="gelwrap">
+      <div>
+        <div id="gel2"></div>
+        <div class="cutbar" id="cutbar2">레인 위에서 끌어 구간을 고르세요.</div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="cut2" type="button" disabled>잘라내기</button>
+          <button class="btn ghost small" id="undo2" type="button">고른 구간 지우기</button>
+        </div>
+      </div>
+      <div>
+        <h3 style="margin-top:0">젤에 보이는 띠</h3>
+        <div class="tbl-wrap"><table id="finTable"></table></div>
+        <div id="finOut"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">모든 계산은 이 브라우저 안에서만 이루어집니다. 차차 © 충남대학교</footer>
+</div>
+
+<script src="dna.js"></script>
+<script src="receptors.js"></script>
+<script src="puc19.js"></script>
+<script src="clone.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var D = DNA, C = CLONE;
+  var S = C.load();
+  var fused = null, finalBands = null;
+
+  function msg(cls, html) { return '<div class="msg ' + cls + '">' + html + '</div>'; }
+  function chip(k, t) { return '<span class="chip ' + k + '">' + t + '</span>'; }
+
+  /* ── 준비물 ── */
+  function showHave() {
+    S = C.load();
+    var rows = '<tr><th>준비물</th><th class="m">크기</th><th class="m">양</th><th>상태</th></tr>';
+    [['cutA', '조각 A (젤에서 잘라낸 것)'], ['cutB', '조각 B (젤에서 잘라낸 것)']].forEach(function (t) {
+      var v = S[t[0]];
+      rows += '<tr><td><b>' + t[1] + '</b></td><td class="m">' + (v ? v.bp.toLocaleString() + ' bp' : '–') + '</td><td class="m">' + (v ? C.ngText(v.ng) : '–') + '</td><td>' + (v ? chip('ok', '있음') : chip('no', '없음')) + '</td></tr>';
+    });
+    var ov = (S.cutA && S.cutB) ? C.overlapLen(S.cutA.seq, S.cutB.seq) : 0;
+    var ovTm = ov ? C.tm(S.cutA.seq.slice(-ov)) : null;
+    rows += '<tr><td><b>겹치는 부분</b></td><td class="m">' + (ov || '–') + ' nt' + (ovTm != null ? '<br>Tm ' + ovTm.toFixed(1) + ' °C' : '') + '</td><td class="m">–</td><td>' +
+      ((ovTm != null && ovTm >= 50) ? chip('ok', '넉넉함') : ov >= 15 ? chip('ok', '가능') : chip('no', '부족')) +
+      (ov ? '' : ' 두 조각에 겹치는 서열이 없습니다') + '</td></tr>';
+    $('have').innerHTML = '<div class="tbl-wrap">' + '<table>' + rows + '</table></div>' +
+      (!S.cutA || !S.cutB ? msg('err', '젤에서 잘라낸 조각이 없습니다. <a href="primer.html">설계 및 1차 PCR</a>에서 두 조각을 모두 잘라내고 오세요.') :
+        ov < 15 ? msg('err', '두 조각에 겹치는 부분이 없어 이어 붙일 수 없습니다. <a href="primer.html">설계 및 1차 PCR</a>로 돌아가, 이음새 쪽 프라이머(A-R, B-F)의 5′에 상대 조각의 서열을 꼬리로 붙이고 다시 돌리세요.') :
+        msg('info', '겹치는 부분이 ' + ov + ' nt' + (ovTm != null ? ', Tm ' + ovTm.toFixed(1) + ' °C' : '') + '입니다. 이 부분의 Tm이 50 °C 이상이면 서로 잘 찾아갑니다.'));
+    return S.cutA && S.cutB && ov >= 15;
+  }
+  showHave();
+
+  /* ── 온도 그래프 ── */
+  var COOL_MIN = 10;   // 그대로 두어 식히는 구간. 학생이 정하지 않는다
+  function coolMinutes() { return COOL_MIN; }
+
+  /* ── 1단계에서 일어나는 일: 세 장면 ── */
+  var BLUE = '#1f5fbf', BLUE2 = '#7aa6e8', GREEN = '#2f9e7a', GREEN2 = '#7fcbb0', OVC = '#f6c445';
+  var fStep = 0;
+  var FSCENES = [
+    { name: '① 변성 (denaturation)',
+      cap: '95 °C에서 두 가닥이 한 가닥씩 떨어집니다. 조각 A와 조각 B가 각각 두 가닥으로 풀립니다.' },
+    { name: '② 식히며 결합 (annealing)',
+      cap: '식는 동안, 겹치는 부분이 있는 두 가닥이 서로를 찾아 그 구간에서만 짝을 이룹니다. 이 구간이 서로의 프라이머가 됩니다.' },
+    { name: '③ 연장 (elongation)',
+      cap: '각 가닥의 3′ 끝에서 상대 가닥을 주형 삼아 빈 쪽이 채워집니다. 한 번만 돌려도 전체 길이의 두 가닥 DNA가 완성됩니다.' }
+  ];
+  function fscene(k) {
+    var W = 680, H = 230, s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + FSCENES[k].name + '">';
+    s += '<defs><marker id="fa" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 Z" fill="#9aa6b4"/></marker></defs>';
+    var OVW = 92;                       // 겹치는 부분의 너비
+    function strand(x1, x2, y, color, w) {
+      return '<line x1="' + x1 + '" y1="' + y + '" x2="' + x2 + '" y2="' + y + '" stroke="' + color + '" stroke-width="' + (w || 7) + '" stroke-linecap="round"/>';
+    }
+    function ovBand(x, y1, y2) {
+      return '<rect x="' + x + '" y="' + (y1 - 9) + '" width="' + OVW + '" height="' + (y2 - y1 + 18) + '" rx="4" fill="#fff3cd"/>';
+    }
+    if (k === 0) {
+      s += '<text x="0" y="14" font-size="12.5" font-weight="700" fill="#26354a">95 °C — 두 가닥이 떨어진다</text>';
+      // 변성 전
+      s += '<text x="0" y="44" font-size="11" fill="#9aa6b4">변성 전</text>';
+      s += ovBand(250, 38, 52);
+      s += strand(70, 342, 38, BLUE) + strand(70, 342, 52, BLUE2);
+      s += strand(250, 560, 38, GREEN) + strand(250, 560, 52, GREEN2);
+      s += '<text x="160" y="28" text-anchor="middle" font-size="11.5" font-weight="700" fill="' + BLUE + '">조각 A</text>';
+      s += '<text x="470" y="28" text-anchor="middle" font-size="11.5" font-weight="700" fill="' + GREEN + '">조각 B</text>';
+      s += '<text x="296" y="70" text-anchor="middle" font-size="10.5" fill="#8a6d00">겹치는 부분</text>';
+      s += '<line x1="340" y1="84" x2="340" y2="104" stroke="#9aa6b4" stroke-width="2" marker-end="url(#fa)"/>';
+      // 변성 후: 네 가닥
+      s += '<text x="0" y="128" font-size="11" fill="#9aa6b4">변성 후</text>';
+      s += '<g class="fs-split">' + strand(70, 342, 126, BLUE) + '<text x="60" y="130" text-anchor="end" font-size="10" fill="#5b6878">5′</text></g>';
+      s += '<g class="fs-split fd1">' + strand(70, 342, 152, BLUE2) + '<text x="60" y="156" text-anchor="end" font-size="10" fill="#5b6878">3′</text></g>';
+      s += '<g class="fs-split fd2">' + strand(250, 560, 178, GREEN) + '<text x="240" y="182" text-anchor="end" font-size="10" fill="#5b6878">5′</text></g>';
+      s += '<g class="fs-split fd3">' + strand(250, 560, 204, GREEN2) + '<text x="240" y="208" text-anchor="end" font-size="10" fill="#5b6878">3′</text></g>';
+      s += '<text x="600" y="130" font-size="10.5" fill="' + BLUE + '">A 위가닥</text>';
+      s += '<text x="600" y="156" font-size="10.5" fill="' + BLUE + '">A 아래가닥</text>';
+      s += '<text x="600" y="182" font-size="10.5" fill="' + GREEN + '">B 위가닥</text>';
+      s += '<text x="600" y="208" font-size="10.5" fill="' + GREEN + '">B 아래가닥</text>';
+    } else if (k === 1) {
+      s += '<text x="0" y="14" font-size="12.5" font-weight="700" fill="#26354a">식는 동안 — 겹치는 부분끼리만 짝을 이룬다</text>';
+      s += '<g class="fs-fade">' + ovBand(250, 104, 124);
+      s += strand(70, 342, 104, BLUE);
+      s += '<text x="60" y="108" text-anchor="end" font-size="10.5" fill="#5b6878">5′</text>';
+      s += '<text x="352" y="108" font-size="10.5" fill="#5b6878">3′</text>';
+      s += '<text x="160" y="92" text-anchor="middle" font-size="11.5" font-weight="700" fill="' + BLUE + '">A 위가닥</text>';
+      s += strand(250, 560, 124, GREEN2);
+      s += '<text x="240" y="138" text-anchor="end" font-size="10.5" fill="#5b6878">3′</text>';
+      s += '<text x="570" y="138" font-size="10.5" fill="#5b6878">5′</text>';
+      s += '<text x="470" y="150" text-anchor="middle" font-size="11.5" font-weight="700" fill="' + GREEN + '">B 아래가닥</text></g>';
+      for (var i = 0; i < 7; i++) {
+        var px = 258 + i * 13;
+        s += '<line class="fs-fade fd1" x1="' + px + '" y1="' + 108 + '" x2="' + px + '" y2="' + 120 + '" stroke="#b8923a" stroke-width="2"/>';
+      }
+      s += '<text x="296" y="' + 80 + '" text-anchor="middle" font-size="11" font-weight="700" fill="#8a6d00">겹치는 부분에서만 결합</text>';
+      s += '<text x="296" y="' + 176 + '" text-anchor="middle" font-size="11" fill="#9aa6b4">이 구간이 서로의 프라이머가 된다</text>';
+      s += '<text x="0" y="214" font-size="11.5" fill="#5b6878">반대 조합(A 아래가닥 + B 위가닥)도 같은 방식으로 짝을 이룹니다.</text>';
+    } else {
+      s += '<text x="0" y="14" font-size="12.5" font-weight="700" fill="#26354a">72 °C — 각 3′ 끝에서 빈 쪽이 채워진다</text>';
+      s += ovBand(250, 92, 112);
+      s += strand(70, 342, 92, BLUE);
+      s += strand(250, 560, 112, GREEN2);
+      // 새로 채워지는 부분
+      s += '<g class="fs-fade fd1">' + strand(342, 560, 92, GREEN, 7) + '</g>';
+      s += '<g class="fs-fade fd2">' + strand(70, 250, 112, BLUE2, 7) + '</g>';
+      s += '<line class="fs-fade fd1" x1="352" y1="76" x2="420" y2="76" stroke="#9aa6b4" stroke-width="2" marker-end="url(#fa)"/>';
+      s += '<text class="fs-fade fd1" x="386" y="68" text-anchor="middle" font-size="10.5" fill="#5b6878">3′ 끝에서 연장</text>';
+      s += '<line class="fs-fade fd2" x1="260" y1="134" x2="192" y2="134" stroke="#9aa6b4" stroke-width="2" marker-end="url(#fa)"/>';
+      s += '<text class="fs-fade fd2" x="226" y="150" text-anchor="middle" font-size="10.5" fill="#5b6878">3′ 끝에서 연장</text>';
+      s += '<g class="fs-fade fd3"><text x="0" y="190" font-size="11" fill="#9aa6b4">완성</text>';
+      s += '<rect x="70" y="180" width="272" height="18" rx="4" fill="' + BLUE + '"/>';
+      s += '<rect x="342" y="180" width="218" height="18" rx="4" fill="' + GREEN + '"/>';
+      s += '<text x="315" y="194" text-anchor="middle" font-size="11.5" font-weight="700" fill="#fff">전체 길이 두 가닥 DNA</text></g>';
+      s += '<text x="0" y="222" font-size="11.5" fill="#5b6878">연장 시간이 모자라면 끝까지 채워지지 않아 이어 붙은 것이 거의 생기지 않습니다.</text>';
+    }
+    s += '</svg>';
+    return s;
+  }
+  function drawFScene() {
+    $('fstage').innerHTML = fscene(fStep);
+    $('fcap').textContent = FSCENES[fStep].cap;
+    $('fsubs').innerHTML = FSCENES.map(function (x, i) {
+      return '<button type="button" data-f="' + i + '" aria-current="' + (i === fStep) + '">' + x.name + '</button>';
+    }).join('');
+  }
+  $('fsubs').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-f]'); if (!b) return;
+    fStep = +b.dataset.f; drawFScene();
+  });
+  drawFScene();
+
+  /* ── 1단계 ── */
+  $('fuse').addEventListener('click', function () {
+    if (!showHave()) return;
+    var hold = +$('hold').value, denT = +$('denT').value, denS = +$('denS').value;
+    var cool = coolMinutes();
+    if (!$('hold').value) { $('fuseOut').innerHTML = msg('err', '연장 시간 칸을 채워 주세요.'); return; }
+    var html = '';
+    if (denT < 92) html += msg('info', '변성 온도가 ' + denT + ' °C입니다. 두 가닥이 완전히 풀리려면 94–95 °C가 좋습니다.');
+    if (denS < 30) html += msg('info', '변성 시간이 ' + denS + '초입니다. 긴 조각은 풀리는 데 시간이 더 걸립니다.');
+
+    var a = S.cutA.seq, b = S.cutB.seq;
+    var r = C.anneal(a, b, { coolMin: cool, holdSec: hold });
+    if (!r.ok) { $('fuseOut').innerHTML = html + msg('err', r.notes.join(' ')); return; }
+
+    var needHold = Math.ceil(r.seq.length / C.RATE * 60 / 30) * 30;
+    var longEnough = hold >= needHold * 0.8;
+    r.notes.forEach(function (n) { html += msg('info', n); });
+
+    if (!longEnough) {
+      html += msg('err', '이어 붙은 것이 거의 없습니다. 두 조각을 합치면 ' + r.seq.length.toLocaleString() + ' bp이므로, 한 번에 끝까지 채우려면 연장 시간을 <b>' + needHold + '초 이상</b> 주어야 합니다.');
+      fused = null; $('amp').hidden = true;
+    } else {
+      fused = { seq: r.seq, bp: r.seq.length, ov: r.overlap };
+      var j = a.length - r.overlap;
+      html += msg('ok', '두 조각이 겹치는 <b>' + r.overlap + ' nt</b>로 붙고, 서로를 주형 삼아 끝까지 채워졌습니다. 이어 붙은 것의 길이는 <b>' + r.seq.length.toLocaleString() + ' bp</b>입니다.');
+      html += '<div class="seqbox"><pre>' +
+        '이어 붙는 모습 (겹치는 부분만 가운데 노란색)\n\n' +
+        '조각 A  5′-<span class="hiA">' + a.slice(Math.max(0, j - 15), j) + '</span><span class="hiOv">' + a.slice(j) + '</span>-3′\n' +
+        '                       ' + '|'.repeat(Math.min(36, r.overlap)) + '\n' +
+        '조각 B               3′-<span class="hiOv">' + D.comp(b.slice(0, r.overlap)) + '</span><span class="hiB">' + D.comp(b.slice(r.overlap, r.overlap + 15)) + '</span>-5′\n\n' +
+        '연장 후  5′-<span class="hiA">…조각 A…</span><span class="hiOv">' + r.overlap + ' nt</span><span class="hiB">…조각 B…</span>-3′   ' + r.seq.length.toLocaleString() + ' bp' +
+        '</pre></div>';
+      C.save({ fused: { bp: r.seq.length, ov: r.overlap } });
+      $('amp').hidden = false;
+      showOp();
+    }
+    $('fuseOut').innerHTML = html;
+  });
+
+  /* ── 2단계 준비 ── */
+  function showOp() {
+    S = C.load();
+    var rows = '<tr><th>프라이머</th><th>서열 (5′→3′)</th><th class="m">길이</th><th>제한효소 자리</th></tr>';
+    [['바깥 Forward', S.outF, S.enzA], ['바깥 Reverse', S.outR, S.enzB]].forEach(function (t) {
+      var e = t[2] ? C.enz(t[2]) : null;
+      var has = t[1] && e && t[1].indexOf(e.site) >= 0;
+      rows += '<tr><td><b>' + t[0] + '</b></td><td class="m" style="white-space:normal;word-break:break-all">' + (t[1] || '<span class="hint">없음</span>') + '</td><td class="m">' + (t[1] ? t[1].length + ' nt' : '–') + '</td><td>' + (e ? e.name + ' (' + e.site + ') ' + (has ? chip('ok', '있음') : chip('no', '없음')) : '–') + '</td></tr>';
+    });
+    $('opTable').innerHTML = rows;
+    if (!S.outF || !S.outR) {
+      $('ampOut').innerHTML = msg('err', '바깥 프라이머가 없습니다. <a href="enzyme.html">연결 PCR 프라이머 설계</a>에서 만들고 오세요.');
+    } else { $('ampOut').innerHTML = ''; }
+  }
+
+  /* ── 2단계 실행 ── */
+  $('run2').addEventListener('click', function () {
+    S = C.load();
+    if (!fused) { $('ampOut').innerHTML = msg('err', '먼저 1단계로 두 조각을 이어 붙이세요.'); return; }
+    if (!S.outF || !S.outR) { showOp(); return; }
+    var ta = +$('ta2').value, ext = +$('ext2').value, cyc = +$('cyc2').value;
+    if (!$('ta2').value || !$('ext2').value || !$('cyc2').value) { $('ampOut').innerHTML = msg('err', '프로그램 칸을 모두 채워 주세요.'); return; }
+    var prog = { ta: ta, extSec: ext, cycles: cyc };
+
+    var tmpls = [
+      { name: '이어 붙은 것', seq: fused.seq, copies: C.COPIES.fused },
+      { name: '남은 조각 A', seq: S.cutA.seq, copies: C.COPIES.leftover },
+      { name: '남은 조각 B', seq: S.cutB.seq, copies: C.COPIES.leftover }
+    ];
+    var res = C.pcr(tmpls, S.outF, S.outR, prog);
+    var html = '';
+    var main = res.bands.filter(function (b) { return !b.dimer; })[0];
+    res.notes.forEach(function (n) { html += msg('info', n); });
+    if (!main) {
+      html += msg('err', '늘어난 산물이 없습니다. 결합 온도와 연장 시간을 다시 보세요.');
+      $('ampOut').innerHTML = html; $('fin').hidden = true; return;
+    }
+    // 남은 조각들도 젤에 보인다
+    var extra = [{ bp: S.cutA.bp, ng: 6, label: '남은 조각 A' }, { bp: S.cutB.bp, ng: 6, label: '남은 조각 B' }];
+    finalBands = res.bands.map(function (b) { return { bp: b.bp, ng: b.ng, seq: b.seq, dimer: b.dimer, label: b.dimer ? '프라이머 이합체' : '늘어난 키메라' }; })
+      .concat(extra).sort(function (x, y) { return y.bp - x.bp; });
+
+    var expect = fused.bp + (S.outF.length - (S.af || '').length) + (S.outR.length - (S.br || '').length);
+    html += msg('ok', '<b>' + main.bp.toLocaleString() + ' bp</b> 산물이 생겼습니다. 이어 붙은 ' + fused.bp.toLocaleString() + ' bp에 양쪽 프라이머의 꼬리가 더해진 길이입니다.');
+
+    // 양 끝에 제한효소 자리가 들어갔는지
+    var a = C.enz(S.enzA), b = C.enz(S.enzB);
+    var nA = (main.seq.match(new RegExp(a.site, 'g')) || []).length;
+    var nB = (main.seq.match(new RegExp(b.site, 'g')) || []).length;
+    var iA = main.seq.indexOf(a.site), iB = main.seq.lastIndexOf(b.site);
+    html += '<div class="seqbox"><pre>' +
+      '최종 산물의 양 끝 (위가닥 5′→3′)\n\n' +
+      '앞쪽\n' +
+      '  여분 ' + main.seq.slice(0, iA) + ' │ <span class="hiSite">' + a.site + '</span> ' + a.name + ' │ ' + main.seq.slice(iA + a.site.length, iA + a.site.length + 24) + ' …\n' +
+      '  (여분 염기 ' + iA + ' nt — 제한효소가 끝을 잘 자르도록 두는 자리)\n\n' +
+      '뒤쪽\n' +
+      '  … ' + main.seq.slice(Math.max(0, iB - 24), iB) + ' │ <span class="hiSite">' + b.site + '</span> ' + b.name + ' │ ' + main.seq.slice(iB + b.site.length) + ' 여분\n' +
+      '  (여분 염기 ' + (main.seq.length - iB - b.site.length) + ' nt · 종결코돈 ' + main.seq.slice(iB - 3, iB) + ' 바로 뒤에 ' + b.name + ' 자리가 있다)' +
+      '</pre></div>';
+    html += msg(nA === 1 && nB === 1 ? 'ok' : 'err',
+      a.name + ' 자리 ' + nA + '곳, ' + b.name + ' 자리 ' + nB + '곳. ' +
+      (nA === 1 && nB === 1 ? '양 끝에 하나씩만 있습니다. 자르면 깔끔한 조각이 나옵니다.' : '하나씩만 있어야 합니다. 안쪽에 자리가 더 있으면 조각이 잘립니다.'));
+
+    C.save({ finalSeq: main.seq, finalBp: main.bp });
+    $('ampOut').innerHTML = html;
+    $('fin').hidden = false;
+    sel2 = null; drawGel2(); showFinTable();
+    $('finOut').innerHTML = '';
+  });
+
+  /* ── 최종 젤 ── */
+  var GW2 = 320, GH2 = 460, LANEW2 = 92, X2 = 60, sel2 = null;
+  function laneX2(i) { return X2 + i * (LANEW2 + 12); }
+  function clampY2(y) { return Math.max(0, Math.min(C.GEL.bottom + 10, y)); }
+  function drawGel2() {
+    var lanes = [
+      { label: '래더', ladder: true, bands: C.LADDER.map(function (bp) { return { bp: bp, ng: 12 }; }) },
+      { label: '연결 PCR', bands: finalBands }
+    ];
+    var s = '<svg class="gel2" viewBox="0 0 ' + GW2 + ' ' + GH2 + '" role="img" aria-label="연결 PCR 결과 젤" style="width:100%;max-width:320px;height:auto;display:block">';
+    s += '<rect x="0" y="0" width="' + GW2 + '" height="' + GH2 + '" rx="10" fill="#14181f"/>';
+    C.LADDER.forEach(function (bp) {
+      s += '<text x="' + (X2 - 8) + '" y="' + (C.yOf(bp) + 18) + '" text-anchor="end" dominant-baseline="middle" font-size="10" fill="#7d8894">' + (bp >= 1000 ? bp / 1000 + 'k' : bp) + '</text>';
+    });
+    lanes.forEach(function (ln, i) {
+      var x = laneX2(i);
+      s += '<rect x="' + x + '" y="18" width="' + LANEW2 + '" height="' + (C.GEL.bottom + 14) + '" fill="#1b2029" stroke="#2b323d"/>';
+      s += '<text x="' + (x + LANEW2 / 2) + '" y="12" text-anchor="middle" font-size="11" fill="#c8d2dc">' + ln.label + '</text>';
+      ln.bands.forEach(function (b) {
+        if (!ln.ladder && b.ng < C.VISIBLE_NG) return;
+        var y = C.yOf(b.bp) + 18, h = ln.ladder ? 3.4 : Math.min(9, 3 + Math.log10(1 + b.ng) * 2.6);
+        var op = ln.ladder ? 0.82 : Math.max(0.22, Math.min(1, 0.3 + Math.log10(1 + b.ng) * 0.42));
+        if (b.cut) op = 0.08;
+        s += '<rect x="' + (x + 5) + '" y="' + (y - h / 2) + '" width="' + (LANEW2 - 10) + '" height="' + h + '" rx="2" fill="#eaf5ff" opacity="' + op.toFixed(2) + '"/>';
+      });
+      if (ln.cut) s += '<rect x="' + (x + 2) + '" y="' + (ln.cut.y0 + 18) + '" width="' + (LANEW2 - 4) + '" height="' + (ln.cut.y1 - ln.cut.y0) + '" fill="#14181f" stroke="#f6c445" stroke-width="1.5" stroke-dasharray="4 3"/>';
+    });
+    s += '<rect id="selRect2" x="0" y="0" width="0" height="0" fill="#f6c445" opacity="0.22" stroke="#f6c445" stroke-width="1.5" visibility="hidden"/>';
+    s += '</svg>';
+    $('gel2').innerHTML = s;
+    window.__lanes2 = lanes;
+    paintSel2(); bindDrag2();
+  }
+  function paintSel2() {
+    var el = document.getElementById('selRect2'); if (!el) return;
+    if (!sel2) { el.setAttribute('visibility', 'hidden'); return; }
+    el.setAttribute('x', laneX2(sel2.lane) + 2); el.setAttribute('width', LANEW2 - 4);
+    el.setAttribute('y', Math.min(sel2.y0, sel2.y1) + 18); el.setAttribute('height', Math.abs(sel2.y1 - sel2.y0));
+    el.setAttribute('visibility', 'visible');
+  }
+  function bindDrag2() {
+    var svg = $('gel2').querySelector('svg'); if (!svg) return;
+    var dragging = false;
+    function toLocal(ev) {
+      var r = svg.getBoundingClientRect();
+      if (!r.width || !r.height) return null;
+      return { x: (ev.clientX - r.left) / r.width * GW2, y: (ev.clientY - r.top) / r.height * GH2 - 18 };
+    }
+    svg.addEventListener('pointerdown', function (ev) {
+      var p = toLocal(ev); if (!p) return;
+      var lx = laneX2(1);
+      if (p.x < lx || p.x > lx + LANEW2) return;
+      dragging = true; sel2 = { lane: 1, y0: clampY2(p.y), y1: clampY2(p.y) };
+      try { svg.setPointerCapture(ev.pointerId); } catch (e) {}
+      paintSel2(); updateCutbar2(); ev.preventDefault();
+    });
+    svg.addEventListener('pointermove', function (ev) {
+      if (!dragging) return;
+      var p = toLocal(ev); if (!p) return;
+      sel2.y1 = clampY2(p.y); paintSel2(); updateCutbar2(); ev.preventDefault();
+    });
+    function stop(ev) { if (!dragging) return; dragging = false; try { svg.releasePointerCapture(ev.pointerId); } catch (e) {} }
+    svg.addEventListener('pointerup', stop);
+    svg.addEventListener('pointercancel', stop);
+  }
+  function selRange2() {
+    if (!sel2) return null;
+    var y0 = Math.min(sel2.y0, sel2.y1), y1 = Math.max(sel2.y0, sel2.y1);
+    return { y0: y0, y1: y1, hiBp: C.bpOf(y0), loBp: C.bpOf(y1) };
+  }
+  function expected2() { var v = C.load().finalBp; return v || null; }
+  function updateCutbar2() {
+    var r = selRange2();
+    if (!r || r.y1 - r.y0 < 4) { $('cutbar2').textContent = '레인 위에서 끌어 구간을 고르세요.'; $('cut2').disabled = true; return; }
+    var inside = finalBands.filter(function (b) { return b.ng >= C.VISIBLE_NG && C.yOf(b.bp) >= r.y0 && C.yOf(b.bp) <= r.y1; });
+    $('cutbar2').innerHTML = '약 <b>' + r.hiBp.toLocaleString() + '</b> bp ~ <b>' + r.loBp.toLocaleString() + '</b> bp 구간 · 안에 든 띠 ' + inside.length + '개';
+    $('cut2').disabled = false;
+  }
+  function showFinTable() {
+    var rows = '<tr><th class="m">크기</th><th class="m">양</th><th>무엇인지</th></tr>';
+    finalBands.forEach(function (b) {
+      if (b.ng < C.VISIBLE_NG) return;
+      rows += '<tr><td class="m">' + b.bp.toLocaleString() + ' bp</td><td class="m">' + C.ngText(b.ng) + '</td><td>' +
+        (b.cut ? '<b>' + b.label + '</b> ' + chip('ok', '잘라냄') : '<span class="hint">직접 판단하세요</span>') + '</td></tr>';
+    });
+    $('finTable').innerHTML = rows;
+  }
+  $('undo2').addEventListener('click', function () { sel2 = null; paintSel2(); updateCutbar2(); });
+  $('cut2').addEventListener('click', function () {
+    var r = selRange2(); if (!r) return;
+    var inside = finalBands.filter(function (b) { return b.ng >= C.VISIBLE_NG && C.yOf(b.bp) >= r.y0 && C.yOf(b.bp) <= r.y1; });
+    window.__lanes2[1].cut = { y0: r.y0, y1: r.y1 };
+    inside.forEach(function (b) { b.cut = true; });
+    sel2 = null; drawGel2(); showFinTable();
+    var main = inside.filter(function (b) { return b.label === '늘어난 키메라'; })[0];
+    var html = '';
+    if (!main) {
+      html += msg('err', '고른 구간에 늘어난 키메라가 없습니다. 앞 단계에서 계산한 크기를 다시 보고, 그 높이를 잘라 보세요.');
+      if (inside.length) html += msg('info', '지금 잘라낸 것은 ' + inside.map(function (b) { return b.label; }).join(', ') + '입니다.');
+      $('finOut').innerHTML = html;
+      return;
+    }
+    if (inside.length > 1) html += msg('info', '구간 안에 띠가 ' + inside.length + '개 들어왔습니다. 남은 조각이 함께 따라오면 다음 반응에 원하지 않는 산물이 섞입니다.');
+    var ng = main.ng * 0.6;
+    C.save({ insert: { bp: main.bp, ng: ng, seq: main.seq } });
+    html += '<div class="tube filled"><h4 style="margin:0 0 4px">삽입 조각 튜브</h4>' +
+      '<b>' + main.bp.toLocaleString() + ' bp</b> · ' + C.ngText(ng) + ' ' + chip('ok', '예상과 일치') + '<br>' +
+      '양 끝에 ' + C.load().enzA + '와 ' + C.load().enzB + ' 자리가 있습니다. 이제 벡터와 함께 자르면 됩니다.</div>';
+    html += msg('ok', '필요한 띠만 골라냈습니다. 이 방법은 남은 조각과 이합체가 함께 생기기 쉬우므로, 마지막에 젤로 한 번 더 고르는 것이 보통입니다.');
+    html += '<div class="row" style="margin-top:12px"><a class="btn" href="clone.html">클로닝 과정 보러 가기</a></div>';
+    $('finOut').innerHTML = html;
+  });
+
+  if (S.outF && S.outR) showOp();
+})();
+</script>
+</body>
+</html>

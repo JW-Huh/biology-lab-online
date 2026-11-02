@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&a.host&&a.host!==location.host){a.target='_blank';a.rel='noopener';}});</script>
+<title>서열 뷰어</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin-top: 12px; }
+@media (max-width: 560px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.cds { display: flex; gap: 8px; align-items: center; }
+.cds input { width: 7em; }
+.sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 4px; }
+.box { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: #fbfcfe; }
+.box .k { font-size: 12.5px; color: var(--ink-soft); }
+.box .v { font: 700 18px/1.3 var(--font-mono); margin-top: 2px; }
+.box .s { font-size: 13px; color: var(--ink-soft); }
+table.prog { border-collapse: collapse; width: 100%; font-size: 14.5px; margin-top: 10px; }
+table.prog td, table.prog th { border-bottom: 1px solid var(--line); padding: 8px 10px; text-align: left; }
+table.prog th { background: #f6f8fb; font-size: 13px; color: var(--ink-soft); }
+table.prog td.m { font-family: var(--font-mono); white-space: nowrap; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; margin: 10px 0; }
+.legend i { display: inline-block; width: 16px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
+.seqbox { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 10px 12px; }
+.seq { font: 13px/1.25 var(--font-mono); white-space: pre; margin: 0; }
+.seq .ln { color: #9aa6b4; }
+.seq .gap { display: block; height: 10px; }
+.c-cds { background: #ece6fb; }
+.c-amp { background: #fff1b8; }
+.c-cds.c-amp { background: #f6e6a6; }
+.c-f { background: var(--blue); color: #fff; font-weight: 700; }
+.c-r { background: var(--mint); color: #fff; font-weight: 700; }
+.res-list { display: grid; gap: 8px; margin-top: 12px; }
+.ampseq { font: 13px/1.5 var(--font-mono); word-break: break-all; max-height: 140px; overflow-y: auto; background: #fbfcfe; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home" href="index.html"><img src="chacha.png" alt="">프라이머 설계 실습</a>
+    <nav class="nav"><a href="pinball.html">유전자 핀볼</a><a href="align.html">엑손 찾기</a><a href="revcomp.html">역상보</a><a href="tm.html">Tm 계산기</a><a href="viewer.html" aria-current="page">서열 뷰어</a><a href="check.html">프라이머 점검</a><a href="pcr.html">PCR 시뮬레이션</a><a href="score.html">비교평가</a></nav>
+  </div>
+
+  <h1>서열 뷰어</h1>
+  <p class="lead">내 유전자 서열을 두 가닥으로 펼쳐 놓고, 프라이머가 어느 가닥 어디에 붙는지, 어떤 구간이 증폭되는지 확인합니다.</p>
+
+  <section class="panel">
+    <label class="field" for="tpl">① 주형 서열 — NCBI의 FASTA를 통째로 복사해서 붙여 넣으세요</label>
+    <textarea id="tpl" spellcheck="false" style="min-height:120px" placeholder="&gt;NM_000518.5 Homo sapiens hemoglobin subunit beta (HBB), mRNA&#10;ACATTTGCTTCTGACACAACTGTGTTCACTAGCAACCTCAAACAGACACCATGGTGCATCTGACTCCTGAGGAG..."></textarea>
+    <div class="grid">
+      <div><label class="field" for="f">② Forward 프라이머(5′→3′)</label><input type="text" id="f" spellcheck="false" autocomplete="off"></div>
+      <div><label class="field" for="r">③ Reverse 프라이머(5′→3′)</label><input type="text" id="r" spellcheck="false" autocomplete="off"></div>
+    </div>
+    <div class="row" style="margin-top:14px"><button class="btn" id="go" type="button">표시하기</button></div>
+    <div id="err" class="msg err" hidden></div>
+    <div id="notes"></div>
+  </section>
+
+  <section class="panel" id="out" hidden>
+    <h2>요약</h2>
+    <div class="sum" id="sum"></div>
+
+    <div id="checks" class="res-list"></div>
+
+    <h2 style="margin-top:22px">두 가닥 서열</h2>
+    <div class="legend">
+      <span><i class="c-f"></i>Forward와 같은 서열(→ 읽기, 아랫가닥에 붙음)</span>
+      <span><i class="c-r"></i>Reverse와 같은 서열(← 읽기, 윗가닥에 붙음)</span>
+      <span><i class="c-amp"></i>PCR 산물</span>
+    </div>
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn small ghost" id="toggle" type="button">전체 서열 보기</button>
+    </div>
+    <div class="seqbox"><pre class="seq" id="seq"></pre></div>
+
+    <h2 style="margin-top:22px">PCR 산물 서열(윗가닥, 5′→3′)</h2>
+    <div class="ampseq" id="amp"></div>
+    <div class="row" style="margin-top:8px"><button class="btn small" id="copyAmp" type="button">복사</button></div>
+  </section>
+
+  <footer class="foot">모든 계산은 이 브라우저 안에서만 이루어지고, 입력한 서열은 어디에도 전송되지 않습니다.</footer>
+</div>
+
+<script src="dna.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var state = null, full = false, WIDTH = 60;
+
+  function hits(t, p) { var h = [], i = t.indexOf(p); while (i >= 0) { h.push(i); i = t.indexOf(p, i + 1); } return h; }
+  function note(cls, html) { var d = document.createElement('div'); d.className = 'msg ' + cls; d.innerHTML = html; $('notes').appendChild(d); }
+  function fail(msg) { $('err').innerHTML = msg; $('err').hidden = false; $('out').hidden = true; }
+  function sec(s) { return s >= 60 ? (s % 60 ? Math.floor(s / 60) + '분 ' + (s % 60) + '초' : (s / 60) + '분') : s + '초'; }
+
+  function run() {
+    $('notes').innerHTML = '';
+    var t = DNA.clean($('tpl').value), f = DNA.clean($('f').value), r = DNA.clean($('r').value);
+    var e = DNA.check(t); if (e) return fail('주형: ' + e);
+    if (!f || !r) return fail('Forward와 Reverse를 모두 넣어 주세요.');
+    e = DNA.check(f) || DNA.check(r); if (e) return fail('프라이머: ' + e);
+
+    var fPlus = hits(t, f), fMinus = hits(t, DNA.rc(f)), rPlus = hits(t, r), rMinus = hits(t, DNA.rc(r));
+    if (!fPlus.length && fMinus.length) return fail('Forward가 주형에 그대로는 없고 <b>역상보로</b> 있어요. Forward와 Reverse를 바꿔 넣었는지 확인하세요.');
+    if (!fPlus.length) return fail('Forward를 주형에서 찾지 못했어요. 서열을 정확히 복사했는지, 같은 유전자의 주형인지 확인하세요.');
+    if (!rMinus.length && rPlus.length) return fail('Reverse가 주형에 <b>그대로</b> 있어요. Reverse는 윗가닥의 역상보여야 합니다. 역상보로 바꾸지 않은 서열을 넣었는지 확인하세요.');
+    if (!rMinus.length) return fail('Reverse의 역상보를 주형에서 찾지 못했어요. 서열을 정확히 복사했는지 확인하세요.');
+    if (fPlus.length > 1) note('info', 'Forward가 주형에서 ' + fPlus.length + '곳 발견되어 첫 번째 자리를 사용합니다.');
+    if (rMinus.length > 1) note('info', 'Reverse가 주형에서 ' + rMinus.length + '곳 발견되어 마지막 자리를 사용합니다.');
+
+    var fa = fPlus[0], fb = fa + f.length - 1, ra = rMinus[rMinus.length - 1], rb = ra + r.length - 1;
+    if (rb <= fb) return fail('Reverse가 Forward보다 왼쪽에 있어서 두 프라이머가 서로 마주 보지 않아요. 이 조합으로는 PCR 산물이 생기지 않습니다.');
+    $('err').hidden = true;
+
+    var size = rb - fa + 1;
+    var tf = DNA.tmNN(f, DNA.DESIGN), tr = DNA.tmNN(r, DNA.DESIGN);
+    state = { t: t, f: f, r: r, fa: fa, fb: fb, ra: ra, rb: rb, size: size };
+
+    $('checks').innerHTML = '';
+    function chk(cls, html) { var d = document.createElement('div'); d.className = 'msg ' + cls; d.innerHTML = html; $('checks').appendChild(d); }
+    if (size >= 70 && size <= 150) chk('ok', 'PCR 산물 ' + size + ' bp — qPCR에 알맞은 길이(70–150 bp)입니다.');
+    else chk('err', 'PCR 산물 ' + size + ' bp — qPCR은 70–150 bp가 좋아요. ' + (size < 70 ? '너무 짧으면 프라이머 이합체와 구분이 어렵습니다.' : '길면 한 사이클 안에 다 복제되지 않아 효율이 떨어집니다.'));
+    if (tf && tr) {
+      var lo = Math.min(tf.tm, tr.tm), hi = Math.max(tf.tm, tr.tm), d = Math.abs(tf.tm - tr.tm);
+      var tmOk = lo >= 57 && hi <= 63 && d <= 3;
+      chk(tmOk ? 'ok' : 'err', 'Tm (③ 설계 기준) Forward ' + tf.tm.toFixed(1) + ' °C, Reverse ' + tr.tm.toFixed(1) + ' °C, 차이 ' + d.toFixed(1) + ' °C' +
+        (tmOk ? ' — 결합 온도 60 °C에 맞습니다.' : ' — qPCR은 두 Tm이 모두 57–63 °C, 차이 3 °C 이내가 좋아요.'));
+    }
+
+    $('sum').innerHTML =
+      box('주형 길이', t.length.toLocaleString() + ' bp', '') +
+      box('Forward 결합 위치', (fa + 1) + '–' + (fb + 1), '아랫가닥에 붙어 → 방향으로 연장') +
+      box('Reverse 결합 위치', (rb + 1) + '–' + (ra + 1), '윗가닥에 붙어 ← 방향으로 연장') +
+      box('PCR 산물(앰플리콘)', size.toLocaleString() + ' bp', (fa + 1) + '–' + (rb + 1));
+
+    $('amp').textContent = t.substring(fa, rb + 1);
+    $('out').hidden = false;
+    full = false; draw();
+  }
+  function box(k, v, s) { return '<div class="box"><div class="k">' + k + '</div><div class="v">' + v + '</div>' + (s ? '<div class="s">' + s + '</div>' : '') + '</div>'; }
+
+  function draw() {
+    var s = state, t = s.t, bot = DNA.comp(t);
+    var from = 0, to = t.length;
+    if (!full) { from = Math.max(0, Math.floor((s.fa - 30) / WIDTH) * WIDTH); to = Math.min(t.length, Math.ceil((s.rb + 31) / WIDTH) * WIDTH); }
+    var pad = String(t.length).length, out = [];
+    for (var a = from; a < to; a += WIDTH) {
+      var b = Math.min(a + WIDTH, t.length);
+      out.push('<span class="ln">' + String(a + 1).padStart(pad) + '  5′ </span>' + paint(t, a, b, 'top') + '<span class="ln"> 3′</span>');
+      out.push('<span class="ln">' + ' '.repeat(pad) + '  3′ </span>' + paint(bot, a, b, 'bot') + '<span class="ln"> 5′</span>');
+      out.push('<span class="gap"></span>');
+    }
+    $('seq').innerHTML = out.join('\n');
+    $('toggle').textContent = full ? 'PCR 산물 근처만 보기' : '전체 서열 보기';
+  }
+  function paint(str, a, b, strand) {
+    var s = state, html = '', cur = null, buf = '';
+    for (var i = a; i < b; i++) {
+      var c = [];
+      if (i >= s.fa && i <= s.rb) c.push('c-amp');
+      if (strand === 'top' && i >= s.fa && i <= s.fb) c = ['c-f'];
+      if (strand === 'bot' && i >= s.ra && i <= s.rb) c = ['c-r'];
+      var key = c.join(' ');
+      var ch = str[i] + ((i - a) % 10 === 9 && i < b - 1 ? ' ' : '');
+      if (key !== cur) { if (buf) html += cur ? '<span class="' + cur + '">' + buf + '</span>' : buf; cur = key; buf = ''; }
+      buf += ch;
+    }
+    if (buf) html += cur ? '<span class="' + cur + '">' + buf + '</span>' : buf;
+    return html;
+  }
+
+  $('go').addEventListener('click', run);
+  $('toggle').addEventListener('click', function () { full = !full; draw(); });
+  $('copyAmp').addEventListener('click', function () {
+    var b = this, txt = $('amp').textContent;
+    function sel() { var rg = document.createRange(); rg.selectNodeContents($('amp')); var w = getSelection(); w.removeAllRanges(); w.addRange(rg); b.textContent = 'Ctrl+C'; }
+    try { navigator.clipboard.writeText(txt).then(function () { b.textContent = '복사됨'; }, sel); } catch (x) { sel(); }
+  });
+})();
+</script>
+</body>
+</html>

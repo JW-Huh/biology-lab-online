@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&a.host&&a.host!==location.host){a.target='_blank';a.rel='noopener';}});</script>
+<title>프라이머 점검</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 560px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.res { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; }
+@media (max-width: 760px) { .res { grid-template-columns: minmax(0, 1fr); } }
+.res h3 { font: 20px/1.2 var(--font-cute); margin: 0 0 4px; }
+.seqline { font-family: var(--font-mono); font-size: 14px; word-break: break-all; color: var(--ink-soft); margin-bottom: 10px; }
+.item { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14.5px; }
+.item .d { color: var(--ink-soft); font-size: 13px; }
+.dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #fff; }
+.ok .dot { background: var(--mint); } .warn .dot { background: #d99a16; } .bad .dot { background: var(--red); }
+pre.pic { font: 13px/1.35 var(--font-mono); background: #f6f8fb; border: 1px solid var(--line); border-radius: 8px; padding: 10px; overflow-x: auto; margin: 8px 0 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--ink-soft); margin-top: 6px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend .dot { width: 14px; height: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home" href="index.html"><img src="chacha.png" alt="">프라이머 설계 실습</a>
+    <nav class="nav"><a href="pinball.html">유전자 핀볼</a><a href="align.html">엑손 찾기</a><a href="revcomp.html">역상보</a><a href="tm.html">Tm 계산기</a><a href="viewer.html">서열 뷰어</a><a href="check.html" aria-current="page">프라이머 점검</a><a href="pcr.html">PCR 시뮬레이션</a><a href="score.html">비교평가</a></nav>
+  </div>
+
+  <h1>프라이머 점검</h1>
+  <p class="lead">길이, GC, 3′ 끝, 반복 서열, 머리핀, 자기끼리 붙는 구간(dimer), 회문(제한효소 자리)을 한 번에 살펴봅니다.</p>
+
+  <section class="panel">
+    <div class="two">
+      <div><label class="field" for="f">Forward 프라이머(5′→3′)</label><input type="text" id="f" spellcheck="false" autocomplete="off"></div>
+      <div><label class="field" for="r">Reverse 프라이머(5′→3′)</label><input type="text" id="r" spellcheck="false" autocomplete="off"></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="go" type="button">점검하기</button>
+      <button class="btn ghost" id="ex" type="button">나쁜 예시 넣기</button>
+    </div>
+    <div class="legend"><span class="ok"><i class="dot"></i>괜찮음</span><span class="warn"><i class="dot"></i>주의</span><span class="bad"><i class="dot"></i>바꾸는 게 좋음</span></div>
+    <div id="err" class="msg err" hidden></div>
+  </section>
+
+  <section class="panel" id="out" hidden>
+    <div class="res" id="res"></div>
+    <div id="pair"></div>
+  </section>
+
+  <section class="panel">
+    <h2>이런 걸 왜 보나요?</h2>
+    <p><b>머리핀(hairpin)</b>: 프라이머 한 가닥이 스스로 접혀 붙는 구조. 접힌 프라이머는 주형에 붙지 못합니다.</p>
+    <p><b>Self-dimer / Cross-dimer</b>: 같은 프라이머끼리, 또는 F와 R이 서로 붙는 것. 특히 <b>3′ 끝끼리 붙으면</b> 중합효소가 그 자리에서 연장해 버려, 젤 아래쪽에 짧은 프라이머 이합체(primer-dimer) 밴드가 생기고 진짜 산물은 줄어듭니다.</p>
+    <p><b>회문(palindrome)과 제한효소 자리</b>: GAATTC(EcoRI)처럼 대부분의 제한효소 인식 서열은 역상보가 자기 자신과 같은 회문입니다. 그래서 프라이머 안에 있으면 같은 프라이머끼리 그 구간에서 그대로 짝을 이룰 수 있습니다. 6 bp 하나 정도는 보통 큰 문제가 되지 않지만, 일반 PCR 프라이머라면 피하는 편이 좋습니다. 클로닝 프라이머(11주차)에서는 일부러 넣고, 대신 다른 조건을 더 엄격히 봅니다.</p>
+    <p class="hint">이 점검은 염기 짝을 세는 간이 방식입니다. 결합 에너지(ΔG)로 정밀하게 보려면 IDT OligoAnalyzer 같은 도구를 씁니다.</p>
+  </section>
+
+  <footer class="foot">모든 계산은 이 브라우저 안에서만 이루어집니다.</footer>
+</div>
+
+<script src="dna.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var MARK = { ok: '✓', warn: '!', bad: '✕' };
+  function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+  function block(name, s) {
+    var q = DNA.qc(s), nn = DNA.tmNN(s);
+    var html = '<div><h3>' + name + '</h3><div class="seqline">5′-' + s + '-3′' + (nn ? ' · Tm ' + nn.tm.toFixed(1) + ' °C' : '') + '</div>';
+    q.items.forEach(function (it) {
+      html += '<div class="item ' + it.level + '"><i class="dot">' + MARK[it.level] + '</i><div>' + esc(it.title) + (it.detail ? '<div class="d">' + esc(it.detail) + '</div>' : '') + '</div></div>';
+    });
+    var d = q.dimer.best3.run >= 3 ? q.dimer.best3 : q.dimer.best;
+    if (d.run >= 4) html += '<pre class="pic">' + esc(DNA.dimerPicture(s, s, d)) + '</pre>';
+    return html + '</div>';
+  }
+
+  function run() {
+    var f = DNA.clean($('f').value), r = DNA.clean($('r').value);
+    // 오류가 나면 이전 결과도 숨긴다(새 결과로 착각하지 않도록)
+    if (!f && !r) { $('err').textContent = '프라이머를 하나 이상 넣어 주세요.'; $('err').hidden = false; $('out').hidden = true; return; }
+    var e = (f && DNA.check(f)) || (r && DNA.check(r));
+    if (e) { $('err').textContent = e; $('err').hidden = false; $('out').hidden = true; return; }
+    $('err').hidden = true; $('out').hidden = false;
+    $('res').innerHTML = (f ? block('Forward', f) : '') + (r ? block('Reverse', r) : '');
+    if (f && r) {
+      var x = DNA.dimer(f, r), t1 = DNA.tmNN(f), t2 = DNA.tmNN(r);
+      var lv = x.best3.run >= 4 ? 'bad' : x.best.run >= 6 ? 'warn' : 'ok';
+      var dt = t1 && t2 ? Math.abs(t1.tm - t2.tm) : null;
+      var lv2 = dt === null ? 'ok' : dt <= 3 ? 'ok' : dt <= 5 ? 'warn' : 'bad';
+      var html = '<h2 style="margin-top:18px">F와 R 사이</h2>';
+      html += '<div class="item ' + lv + '"><i class="dot">' + MARK[lv] + '</i><div>F와 R이 서로 붙는 구간(cross-dimer): 최대 ' + x.best.run + ' bp' + (x.best3.run >= 3 ? ', 3′ 끝 포함 ' + x.best3.run + ' bp' : '') + '</div></div>';
+      if (dt !== null) html += '<div class="item ' + lv2 + '"><i class="dot">' + MARK[lv2] + '</i><div>두 Tm의 차이 ' + dt.toFixed(1) + ' °C <div class="d">3 °C 이내가 좋아요.</div></div></div>';
+      var d = x.best3.run >= 3 ? x.best3 : x.best;
+      if (d.run >= 4) html += '<pre class="pic">' + esc(DNA.dimerPicture(f, r, d)) + '</pre>';
+      $('pair').innerHTML = html;
+    } else $('pair').innerHTML = '';
+  }
+  $('go').addEventListener('click', run);
+  $('ex').addEventListener('click', function () { $('f').value = 'GAATTCAAAAAGCGCGCGCC'; $('r').value = 'ATATATATGGCGCGCGC'; run(); });
+  ['f', 'r'].forEach(function (id) { $(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') run(); }); });
+})();
+</script>
+</body>
+</html>

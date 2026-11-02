@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&a.host&&a.host!==location.host){a.target='_blank';a.rel='noopener';}});</script>
+<title>유전자 핀볼</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+.game { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .game { grid-template-columns: minmax(0, 1fr); } }
+.board { position: relative; width: 100%; max-width: 400px; margin: 0 auto; }
+.board canvas { display: block; width: 100%; height: auto; border-radius: 18px; background: #ffffff; border: 3px solid #26354a; }
+.chacha { position: absolute; top: 4px; left: 50%; width: 27%; transform: translateX(-50%); transition: left .7s cubic-bezier(.4,1.4,.6,1); pointer-events: none; }
+.chacha img { width: 100%; display: block; }
+.chacha.throw img { animation: hop .35s ease-out; }
+@keyframes hop { 0% { transform: translateY(0) } 40% { transform: translateY(-10px) rotate(-6deg) } 100% { transform: translateY(0) } }
+.bubble { position: absolute; top: 4px; left: 92%; white-space: nowrap; font: 15px/1.2 var(--font-cute); background: #fff; border: 2px solid #26354a; border-radius: 12px; padding: 6px 10px; opacity: 0; transition: opacity .2s; }
+.bubble.show { opacity: 1; }
+.chacha.flip .bubble { left: auto; right: 92%; }
+.side { display: grid; gap: 16px; min-width: 0; }
+.card { border: 2px solid var(--blue); border-radius: 14px; padding: 18px; background: var(--panel); }
+.card .sym { font: 34px/1 var(--font-cute); color: var(--blue); }
+.card .ko { font-weight: 700; margin-top: 6px; }
+.card dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 14px 0; font-size: 14.5px; }
+.card dt { color: var(--ink-soft); }
+.card dd { margin: 0; font-family: var(--font-mono); }
+.card p { margin: 0 0 14px; font-size: 14.5px; }
+.empty { color: var(--ink-soft); font-size: 14.5px; }
+@media (prefers-reduced-motion: reduce) { .chacha { transition: none; } .chacha.throw img { animation: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home" href="index.html"><img src="chacha.png" alt="">프라이머 설계 실습</a>
+    <nav class="nav"><a href="pinball.html" aria-current="page">유전자 핀볼</a><a href="align.html">엑손 찾기</a><a href="revcomp.html">역상보</a><a href="tm.html">Tm 계산기</a><a href="viewer.html">서열 뷰어</a><a href="check.html">프라이머 점검</a><a href="pcr.html">PCR 시뮬레이션</a><a href="score.html">비교평가</a></nav>
+  </div>
+
+  <h1>유전자 핀볼</h1>
+  <p class="lead">학번을 넣고 공을 굴리면 차차가 오늘 설계할 유전자를 골라 줘요. 같은 학번은 몇 번을 굴려도 같은 유전자가 나옵니다.</p>
+
+  <div class="game">
+    <div class="board" id="board">
+      <canvas id="cv" width="360" height="600" aria-label="핀볼 판"></canvas>
+      <div class="chacha" id="chacha"><div class="bubble" id="bubble"></div><img src="chacha.png" alt="차차"></div>
+    </div>
+
+    <div class="side">
+      <div class="panel">
+        <label class="field" for="sid">학번</label>
+        <input type="text" id="sid" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="예: 202612345">
+        <p class="hint">202로 시작하는 9자리 숫자</p>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="go" type="button">공 굴리기</button>
+        </div>
+        <div id="err" class="msg err" hidden></div>
+      </div>
+
+      <div id="result">
+        <p class="empty">아직 공을 굴리지 않았어요. 결과가 나오면 여기 유전자 정보가 보입니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="foot">서열 정보는 NCBI RefSeq (2026-10-29 확인) 기준입니다. 차차 © 충남대학교</footer>
+</div>
+
+<script src="assign.js"></script>
+<script>
+(function () {
+  var GENES = [
+    { sym: 'HBB',   ko: '베타 글로빈',              acc: 'NM_000518.5', len: 628,  cds: '51–494',  g: ['NC_000011.10', 5225464, 5227071, 1], note: '적혈구에서 산소를 나르는 헤모글로빈의 한 부분입니다. 겸상적혈구빈혈의 원인 유전자예요.' },
+    { sym: 'IL6',   ko: '인터루킨-6',               acc: 'NM_000600.5', len: 1127, cds: '64–702',  g: ['NC_000007.14', 22727200, 22731998, 0], note: '염증이 생기면 분비되는 대표적인 사이토카인입니다.' },
+    { sym: 'TNF',   ko: '종양괴사인자',             acc: 'NM_000594.4', len: 1678, cds: '178–879', g: ['NC_000006.12', 31575565, 31578336, 0], note: '염증과 면역 반응을 이끄는 신호 단백질입니다. 기호는 TNFA가 아니라 TNF예요.' },
+    { sym: 'IL10',  ko: '인터루킨-10',              acc: 'NM_000572.3', len: 1630, cds: '60–596',  g: ['NC_000001.11', 206767602, 206772494, 1], note: '지나친 면역 반응을 가라앉히는 사이토카인입니다.' },
+    { sym: 'IFNG',  ko: '인터페론 감마',            acc: 'NM_000619.3', len: 1211, cds: '126–626', g: ['NC_000012.12', 68154768, 68159740, 1], note: '바이러스에 감염된 세포를 공격하는 면역세포가 분비합니다.' },
+    { sym: 'SOD1',  ko: '초과산화물 불균등화효소 1', acc: 'NM_000454.5', len: 895,  cds: '78–542',  g: ['NC_000021.9', 31659693, 31668931, 0], note: '세포 안의 활성산소를 없애는 효소입니다. 루게릭병(ALS)과 관련 있어요.' },
+    { sym: 'APOE',  ko: '아포지단백 E',             acc: 'NM_000041.4', len: 1166, cds: '70–1023', g: ['NC_000019.10', 44905796, 44909393, 0], note: '혈액에서 콜레스테롤을 운반합니다. 알츠하이머병 위험도와 관련 있어요.' },
+    { sym: 'HMOX1', ko: '헴 산소화효소 1',          acc: 'NM_002133.3', len: 1554, cds: '79–945',  g: ['NC_000022.11', 35381096, 35394207, 0], note: '헴을 분해하는 효소로, 세포가 스트레스를 받으면 많아집니다.' }
+  ];
+  var N = GENES.length;
+  var W = 360, H = 600, R = 7, PR = 5, SLOT_TOP = 500, FLOOR = 590 - R;
+  var SW = W / N;
+
+  // 핀 배치
+  var pegs = [];
+  for (var row = 0; row < 10; row++) {
+    var y = 150 + row * 34;
+    if (row % 2 === 0) { for (var k = 0; k < N; k++) pegs.push([SW / 2 + k * SW, y]); }
+    else { for (var k2 = 1; k2 < N; k2++) pegs.push([k2 * SW, y]); }
+  }
+
+  // 같은 학번 → 같은 결과. 규칙은 assign.js
+  if (ASSIGN.SYMS.join() !== GENES.map(function (g) { return g.sym; }).join()) console.error('assign.js의 유전자 순서가 GENES와 다릅니다');
+  function rng(seed) {
+    return function () {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  // 공 한 번 굴려서 경로를 기록
+  function simulate(seed) {
+    var rand = rng(seed);
+    var x = 110 + rand() * 140, y = 100, vx = (rand() - 0.5) * 60, vy = 0;
+    var dt = 1 / 120, g = 760, path = [], slot = -1;
+    for (var step = 0; step < 1400; step++) {
+      vy += g * dt; x += vx * dt; y += vy * dt;
+      if (y < SLOT_TOP) {
+        for (var i = 0; i < pegs.length; i++) {
+          var dx = x - pegs[i][0], dy = y - pegs[i][1], d2 = dx * dx + dy * dy, m = R + PR;
+          if (d2 < m * m) {
+            var d = Math.sqrt(d2) || 0.01, nx = dx / d, ny = dy / d;
+            x = pegs[i][0] + nx * m; y = pegs[i][1] + ny * m;
+            var vn = vx * nx + vy * ny;
+            if (vn < 0) { vx -= 1.45 * vn * nx; vy -= 1.45 * vn * ny; }
+            var kick = (rand() - 0.5) * 70; vx += -ny * kick; vy += nx * kick;
+          }
+        }
+        if (x < R) { x = R; vx = Math.abs(vx) * 0.6; }
+        if (x > W - R) { x = W - R; vx = -Math.abs(vx) * 0.6; }
+      } else {
+        if (slot < 0) slot = Math.min(N - 1, Math.max(0, Math.floor(x / SW)));
+        var lo = slot * SW + R + 1, hi = (slot + 1) * SW - R - 1;
+        if (x < lo) { x = lo; vx = Math.abs(vx) * 0.4; }
+        if (x > hi) { x = hi; vx = -Math.abs(vx) * 0.4; }
+        if (y >= FLOOR) { y = FLOOR; path.push([x, y]); break; }
+      }
+      var sp = Math.hypot(vx, vy); if (sp > 650) { vx *= 650 / sp; vy *= 650 / sp; }
+      path.push([x, y]);
+    }
+    return { slot: slot, path: path, x0: path[0][0] };
+  }
+  function planFor(target) {
+    for (var s = 1; s < 5000; s++) { var r = simulate(s); if (r.slot === target) return r; }
+    return simulate(1);
+  }
+  // 점검용: pinball.html?selftest 로 열면 칸마다 경로를 찾는 데 필요한 시도 횟수를 콘솔에 표시
+  if (/selftest/.test(location.search)) {
+    var report = GENES.map(function (g, i) {
+      for (var s = 1; s < 5000; s++) if (simulate(s).slot === i) return g.sym + ':' + s;
+      return g.sym + ':없음';
+    });
+    console.log('pinball selftest ' + report.join(' '));
+  }
+
+  // 그리기
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = W * dpr; cv.height = H * dpr; ctx.scale(dpr, dpr);
+  var COLORS = ['#e6effb', '#e3f4ee', '#fdf0d5', '#fbe9e7', '#efe8fb', '#e3f4ee', '#e6effb', '#fdf0d5'];
+  var win = -1, confetti = [];
+
+  function draw(ball) {
+    ctx.clearRect(0, 0, W, H);
+    for (var i = 0; i < N; i++) {
+      ctx.fillStyle = i === win ? '#f6c445' : COLORS[i];
+      ctx.fillRect(i * SW, SLOT_TOP, SW, H - SLOT_TOP);
+    }
+    ctx.strokeStyle = '#26354a'; ctx.lineWidth = 3;
+    for (var j = 1; j < N; j++) { ctx.beginPath(); ctx.moveTo(j * SW, SLOT_TOP - 6); ctx.lineTo(j * SW, H); ctx.stroke(); }
+    ctx.fillStyle = '#26354a';
+    ctx.font = 'bold 12px "Noto Sans KR", sans-serif'; ctx.textAlign = 'center';
+    for (var t = 0; t < N; t++) ctx.fillText(GENES[t].sym, t * SW + SW / 2, 568);
+    for (var p = 0; p < pegs.length; p++) {
+      ctx.beginPath(); ctx.arc(pegs[p][0], pegs[p][1], PR, 0, Math.PI * 2);
+      ctx.fillStyle = '#1f5fbf'; ctx.fill();
+    }
+    for (var c = 0; c < confetti.length; c++) { var q = confetti[c]; ctx.fillStyle = q.col; ctx.fillRect(q.x, q.y, 5, 5); }
+    if (ball) {
+      ctx.beginPath(); ctx.arc(ball[0], ball[1], R, 0, Math.PI * 2);
+      ctx.fillStyle = '#f6c445'; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = '#26354a'; ctx.stroke();
+    }
+  }
+  draw(null);
+
+  var chacha = document.getElementById('chacha'), bubble = document.getElementById('bubble');
+  var go = document.getElementById('go'), sid = document.getElementById('sid'), err = document.getElementById('err');
+  var resultBox = document.getElementById('result');
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function say(text) { bubble.textContent = text; bubble.classList.add('show'); }
+
+  function showResult(g) {
+    var gd = g.g, gName = gd[0] + ':' + (gd[3] ? 'c' + gd[2] + '-' + gd[1] : gd[1] + '-' + gd[2]);
+    var gUrl = 'https://www.ncbi.nlm.nih.gov/nuccore/' + gd[0] + '?report=fasta&from=' + gd[1] + '&to=' + gd[2] + (gd[3] ? '&strand=true' : '');
+    resultBox.innerHTML =
+      '<div class="card">' +
+        '<div class="sym">' + g.sym + '</div>' +
+        '<div class="ko">' + g.ko + '</div>' +
+        '<dl><dt>mRNA (RefSeq)</dt><dd>' + g.acc + ' · ' + g.len.toLocaleString() + ' bp</dd>' +
+        '<dt>CDS 위치</dt><dd>' + g.cds + '</dd>' +
+        '<dt>gDNA (유전자 구간)</dt><dd>' + gName + ' · ' + (gd[2] - gd[1] + 1).toLocaleString() + ' bp</dd></dl>' +
+        '<p>' + g.note + '</p>' +
+        '<div class="row">' +
+          '<a class="btn" href="https://www.ncbi.nlm.nih.gov/nuccore/' + g.acc + '" target="_blank" rel="noopener">mRNA 보기</a>' +
+          '<a class="btn" href="' + gUrl + '" target="_blank" rel="noopener">gDNA 보기(FASTA)</a>' +
+          '<button class="btn ghost" type="button" id="copyAcc">번호 복사</button>' +
+        '</div>' +
+        '<p class="hint" style="margin-top:12px">RefSeq 번호는 점 뒤 버전까지입니다. 버튼 없이 직접 찾아가는 방법은 <a href="guide.html?doc=ncbi">NCBI 찾아가기 안내</a>에 있어요.</p>' +
+      '</div>';
+    document.getElementById('copyAcc').addEventListener('click', function (e) {
+      var b = e.currentTarget;
+      try { navigator.clipboard.writeText(g.acc).then(function () { b.textContent = '복사됨'; }, function () { b.textContent = g.acc; }); }
+      catch (x) { b.textContent = g.acc; }
+    });
+  }
+
+  function burst() {
+    confetti = [];
+    var cols = ['#1f5fbf', '#2f9e7a', '#c8423b', '#f6c445', '#8b5cf6'];
+    for (var i = 0; i < 40; i++) confetti.push({ x: win * SW + SW / 2, y: SLOT_TOP, vx: (Math.random() - 0.5) * 220, vy: -Math.random() * 260 - 80, col: cols[i % 5] });
+    var t0 = performance.now();
+    (function fly(now) {
+      var dt = 1 / 60;
+      confetti.forEach(function (q) { q.vy += 500 * dt; q.x += q.vx * dt; q.y += q.vy * dt; });
+      draw([plan.path[plan.path.length - 1][0], plan.path[plan.path.length - 1][1]]);
+      if (now - t0 < 1400) requestAnimationFrame(fly); else { confetti = []; draw(plan.path[plan.path.length - 1]); }
+    })(t0);
+  }
+
+  var plan = null, busy = false;
+  function roll() {
+    if (busy) return;
+    var id = sid.value.trim();
+    if (!/^202\d{6}$/.test(id)) { err.textContent = id ? '학번은 202로 시작하는 9자리 숫자예요. 다시 확인해 주세요.' : '학번을 먼저 입력하세요.'; err.hidden = false; sid.focus(); return; }
+    err.hidden = true; busy = true; go.disabled = true; win = -1; confetti = [];
+    bubble.classList.remove('show');
+    var target = ASSIGN.pick(id);
+    plan = planFor(target);
+    draw(null);
+    chacha.style.left = (plan.x0 / W * 100) + '%';
+    chacha.classList.toggle('flip', plan.x0 > W * 0.55);
+    say('간다~!');
+    setTimeout(function () {
+      chacha.classList.remove('throw'); void chacha.offsetWidth; chacha.classList.add('throw');
+      var start = performance.now(), path = plan.path;
+      if (reduce) { finish(target); return; }
+      (function frame(now) {
+        var i = Math.min(path.length - 1, Math.floor((now - start) / 1000 * 120));
+        draw(path[i]);
+        if (i < path.length - 1) requestAnimationFrame(frame); else finish(target);
+      })(start);
+    }, reduce ? 0 : 750);
+  }
+  function finish(target) {
+    win = target;
+    draw(plan.path[plan.path.length - 1]);
+    if (!reduce) burst();
+    say(GENES[target].sym + ' 당첨!');
+    showResult(GENES[target]);
+    busy = false; go.disabled = false;
+  }
+
+  go.addEventListener('click', roll);
+  sid.addEventListener('keydown', function (e) { if (e.key === 'Enter') roll(); });})();
+</script>
+</body>
+</html>

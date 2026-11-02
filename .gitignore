@@ -1,0 +1,8 @@
+# 교수자 전용 자료 (정답, 운영 메모)는 올리지 않는다
+instructor/
+
+# 운영체제·편집기 부산물
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&a.host&&a.host!==location.host){a.target='_blank';a.rel='noopener';}});</script>
+<title>생명과학실험2 온라인 실습</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+.hero { display: flex; gap: 20px; align-items: center; margin: 12px 0 28px; }
+.hero img { width: 150px; flex: none; }
+@media (max-width: 520px) { .hero { flex-direction: column; text-align: center; } }
+.weekgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; }
+.wk { display: block; text-decoration: none; color: var(--ink); background: var(--panel); border: 2px solid var(--line); border-radius: 16px; padding: 20px; transition: border-color .15s, transform .15s; }
+.wk:hover { border-color: var(--blue); transform: translateY(-2px); }
+.wk .num { font: 700 12px/1 var(--font-body); color: var(--ink-soft); }
+.wk h2 { color: var(--blue); margin: 6px 0 8px; }
+.wk p { margin: 0 0 10px; color: var(--ink-soft); font-size: 14.5px; }
+.wk ul { margin: 0; padding-left: 1.1em; color: var(--ink-soft); font-size: 13.5px; }
+.wk li { margin: 2px 0; }
+.note { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-top: 20px; }
+.note h2 { margin-top: 0; }
+.note ul { margin: 8px 0 0; padding-left: 1.2em; }
+.note li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <img src="chacha.png" alt="돋보기를 든 생명시스템과학대학 차차">
+    <div>
+      <h1>생명과학실험2 온라인 실습</h1>
+      <p class="lead" style="margin:0">충남대학교 생명시스템과학대학 · 주차별 실습 도구를 모아 둔 곳입니다. 설치하거나 가입할 것 없이 브라우저에서 바로 씁니다.</p>
+    </div>
+  </div>
+
+  <div class="weekgrid">
+    <a class="wk" href="week10/index.html">
+      <span class="num">10주차</span>
+      <h2>프라이머 설계</h2>
+      <p>유전자 하나를 받아 qPCR 프라이머 한 쌍을 직접 설계하고, PCR을 돌려 확인합니다.</p>
+      <ul>
+        <li>유전자 핀볼 · 엑손 찾기</li>
+        <li>역상보 · Tm 계산기 · 서열 뷰어</li>
+        <li>프라이머 점검 · PCR 시뮬레이션 · 비교평가</li>
+      </ul>
+    </a>
+    <a class="wk" href="week11/index.html">
+      <span class="num">11주차</span>
+      <h2>도메인 교환 클로닝</h2>
+      <p>두 수용체의 조각을 바꿔 끼운 유전자를 설계하고, 플라스미드에 넣는 데까지 따라갑니다.</p>
+      <ul>
+        <li>플라스미드 뷰어 · 도메인 지도</li>
+        <li>설계 및 1차 PCR · 연결 PCR 프라이머</li>
+        <li>연결 PCR · 클로닝 과정</li>
+      </ul>
+    </a>
+  </div>
+
+  <div class="note">
+    <h2>쓰는 법</h2>
+    <ul>
+      <li>주차를 고르면 그 주차의 표지로 갑니다. 표지의 <b>Step 1</b>부터 순서대로 따라가면 됩니다.</li>
+      <li>각 주차에 <b>따라하기 안내문</b>과 <b>기록지</b>가 함께 있습니다. 보고서는 기록지의 항목을 채워 사이버캠퍼스에 제출합니다.</li>
+      <li>넣은 값은 쓰는 브라우저에만 남습니다. 컴퓨터를 바꾸면 처음부터 다시 합니다.</li>
+      <li>모든 계산은 브라우저 안에서만 이루어집니다. 입력한 내용은 어디로도 전송되지 않습니다.</li>
+    </ul>
+  </div>
+
+  <footer class="foot">충남대학교 생명시스템과학대학 생명과학실험2 · 자료 문의 허지원 · 차차 © 충남대학교</footer>
+</div>
+</body>
+</html>

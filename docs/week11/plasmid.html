@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&a.host&&a.host!==location.host){a.target='_blank';a.rel='noopener';}});</script>
+<title>플라스미드 뷰어</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+.intro ul { margin: 8px 0 0; padding-left: 1.2em; }
+.intro li { margin: 5px 0; }
+.mapgrid { display: grid; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); gap: 24px; align-items: start; margin-top: 18px; }
+@media (max-width: 980px) { .mapgrid { grid-template-columns: minmax(0, 1fr); } }
+svg.map { width: 100%; max-width: 560px; height: auto; display: block; margin: 0 auto; }
+svg.map text { font-family: "Noto Sans KR", sans-serif; }
+svg.map .feat { cursor: pointer; transition: opacity .12s; }
+svg.map .feat:hover { opacity: .75; }
+svg.map .tickhit { fill: transparent; cursor: pointer; }
+.detail { border: 1.5px solid var(--line); border-radius: 16px; background: #fbfcfe; padding: 16px 18px; }
+.detail h3 { margin: 0 0 2px; font-size: 17px; }
+.detail .sub { font-size: 13px; color: var(--ink-soft); margin: 0 0 10px; }
+.detail dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0; font-size: 14px; }
+.detail dt { color: var(--ink-soft); }
+.detail dd { margin: 0; }
+.detail pre { font: 12.5px/1.5 var(--font-mono); margin: 10px 0 0; white-space: pre; overflow-x: auto; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.detail ul { margin: 8px 0 0; padding-left: 1.15em; font-size: 14px; }
+.detail li { margin: 3px 0; }
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { border-bottom: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+th { background: #f6f8fb; font-size: 12.5px; color: var(--ink-soft); }
+td.m, th.m { font-family: var(--font-mono); white-space: nowrap; }
+tr.good td { background: #eafaf3; }
+tr.dim td { color: #9aa6b4; }
+tr.erow:hover td { background: #eef4fd; }
+.seqwrap { border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 12px 14px; }
+.seqwrap pre { font: 12.5px/1.52 var(--font-mono); margin: 0; white-space: pre; }
+.seqwrap .num { color: #9aa6b4; }
+.rs { background: #fef3c7; border-radius: 2px; cursor: pointer; }
+.rs.single { background: #d1fae5; }
+.rs.on { background: #f59e0b; color: #fff; }
+.lab { cursor: pointer; color: #5b6878; }
+.lab.on { color: #b45309; font-weight: 700; }
+.cut { color: #c8d2dc; }
+.cut.on { color: #ef4444; font-weight: 700; }
+.navrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; font-size: 14px; }
+.navrow select, .navrow input { font: 14px var(--font-mono); padding: 7px 9px; border: 1.5px solid var(--line); border-radius: 9px; background: #fbfcfe; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--ink-soft); margin-top: 10px; }
+.legend i { display: inline-block; width: 13px; height: 13px; border-radius: 4px; margin-right: 5px; vertical-align: -2px; }
+.row-opts { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 10px; font-size: 14px; }
+details.panel > summary { cursor: pointer; font-family: var(--font-cute); font-weight: 400; font-size: 22px; list-style: none; display: flex; align-items: center; gap: 9px; }
+details.panel > summary::-webkit-details-marker { display: none; }
+details.panel > summary::before { content: '▸'; font-size: 15px; color: var(--blue); font-family: var(--font-body); }
+details.panel[open] > summary::before { content: '▾'; }
+details.panel > summary::after { content: '펼쳐 보기'; font: 13px var(--font-body); color: var(--ink-soft); }
+details.panel[open] > summary::after { content: '접기'; }
+details.panel > summary + * { margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home" href="index.html"><img src="chacha.png" alt="">11주차 · 도메인 교환 클로닝</a>
+    <nav class="nav">
+      <a href="plasmid.html" aria-current="page">플라스미드</a><a href="domain.html">도메인 지도</a><a href="primer.html">설계 및 1차 PCR</a><a href="enzyme.html">연결 PCR 프라이머</a><a href="sew.html">연결 PCR</a><a href="clone.html">클로닝</a>
+    </nav>
+  </div>
+
+  <h1>플라스미드 뷰어 · pUC19</h1>
+  <p class="lead">내 유전자를 실어 나르는 벡터입니다. 서열은 공개되어 있고(GenBank <a href="https://www.ncbi.nlm.nih.gov/nuccore/L09137.2">L09137.2</a>), 누구나 쓸 수 있어서 클로닝 실습과 연구에 가장 널리 쓰입니다.</p>
+
+  <section class="panel intro">
+    <h2>pUC19은 어떤 벡터인가</h2>
+    <p style="margin-top:0">2,686 bp의 <b>원형 두 가닥</b> DNA입니다. 벡터로 쓰이려면 아래 네 가지가 갖춰져야 하며, pUC19에는 모두 들어 있습니다.</p>
+    <ul>
+      <li><b>복제 시작점 ori</b> <span class="mono">867–1455</span> — 대장균 안에서 플라스미드 복제가 시작되는 지점입니다. 없으면 세포가 분열할 때 플라스미드가 사라집니다.</li>
+      <li><b>선별 표지 AmpR</b> <span class="mono">1626–2486</span> — β-락타메이스를 만듭니다. 앰피실린이 든 배지에서는 이 플라스미드를 가진 세포만 살아남습니다.</li>
+      <li><b>넣을 자리 MCS</b> <span class="mono">396–454</span> — 제한효소 자리가 50 bp 남짓한 구간에 모여 있습니다. 넣을 유전자를 여기에 끼웁니다.
+        <br><span class="hint">MCS는 <b>lacZα 유전자 안에</b> 들어가도록 배치되어 있습니다. 그래서 여기에 무언가 삽입되면 lacZα가 끊어지고, 이 성질을 이용해 나중에 콜로니 색으로 삽입 여부를 가릴 수 있습니다.</span></li>
+      <li><b>프로모터 lac</b> <span class="mono">521–543</span> — RNA 중합효소가 결합하는 자리입니다. 전사는 번호가 <b>작아지는 쪽</b>으로 진행합니다. 바로 옆의 오페레이터(487–509)와 함께 대장균의 lac 오페론에서 가져온 조절 부위입니다.</li>
+    </ul>
+    <p class="hint">pUC19에 들어 있는 것은 lacZ 유전자 전체가 아니라 앞쪽 조각(α 단편)입니다. 대장균이 가진 나머지 조각과 합쳐져야 효소가 되므로, α 단편이 끊어지면 효소가 만들어지지 않습니다. 또 lac 프로모터는 대장균에서 작동하므로, 사람 세포 표면에 수용체를 실제로 발현시키려면 이후 사람 세포용 벡터로 옮겨야 합니다. 이번 실습은 클로닝 설계까지 다룹니다.</p>
+
+    <div class="mapgrid">
+      <div>
+        <div id="map"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div>
+        <div class="detail" id="detail"></div>
+        <p class="hint">색 띠나 바깥 눈금에 마우스를 올리면 그 구간의 설명이 여기에 나옵니다. 지도를 누르면 그 자리의 서열로 내려갑니다.</p>
+        <p class="hint">아래 <b>전체 서열에서 제한효소 자리</b>와 <b>제한효소</b>는 찾아볼 때 펼치는 자료입니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>서열 확대 보기</h2>
+    <ul class="hint" style="margin-top:0;padding-left:1.2em">
+      <li>지도에서 아무 곳이나 누르면 그 자리로 옮겨 옵니다.</li>
+      <li>효소 <b>이름</b>이나 <b>서열</b> 어느 쪽에 마우스를 올려도 그 효소의 인식 서열 전체가 두 가닥에서 함께 칠해집니다. 인식 서열이 서로 겹치는 구간에서도 마찬가지입니다.</li>
+    </ul>
+    <div class="navrow">
+      <button class="btn small ghost" id="zl" type="button">◀ 60</button>
+      <label for="zc">중심</label>
+      <input type="number" id="zc" value="425" min="1" max="2686" style="width:92px">
+      <button class="btn small ghost" id="zr" type="button">60 ▶</button>
+      <label for="zw">보는 폭</label>
+      <select id="zw"><option value="60">60 bp</option><option value="120" selected>120 bp</option><option value="240">240 bp</option><option value="480">480 bp</option></select>
+      <label for="zp">바로 가기</label>
+      <select id="zp">
+        <option value="425">MCS</option>
+        <option value="532">lac 프로모터</option>
+        <option value="498">lac 오페레이터</option>
+        <option value="300">lacZα 가운데</option>
+        <option value="2480">AmpR 시작 쪽</option>
+        <option value="1160">ori</option>
+      </select>
+    </div>
+    <div class="seqwrap resize-y" id="zoom" style="height:250px"><pre></pre></div>
+    <div class="detail" id="zdetail" style="margin-top:12px"></div>
+  </section>
+
+  <details class="panel">
+    <summary>전체 서열에서 제한효소 자리</summary>
+    <p class="hint" style="margin-top:0">2,686 bp 전체입니다. 칠해진 자리에 마우스를 올리면 어떤 효소인지 나옵니다. 자리가 어디에 몰려 있는지 보세요.</p>
+    <div class="row-opts">
+      <label><input type="checkbox" id="onlySingle"> MCS 안에서 한 번만 자르는 효소만 표시</label>
+    </div>
+    <div class="seqwrap resize-y" id="fullSeq" style="margin-top:10px;height:420px"><pre></pre></div>
+    <div class="detail" id="fdetail" style="margin-top:12px"></div>
+  </details>
+
+  <details class="panel">
+    <summary>제한효소</summary>
+    <p class="hint" style="margin-top:0">줄 위에 마우스를 올리면 어떻게 잘려 어떤 말단이 생기는지 아래에 나옵니다. 초록색 줄은 MCS 안에서 한 번만 자르는 효소입니다.</p>
+    <div class="tbl-wrap"><table id="etable"></table></div>
+    <div class="detail" id="edetail" style="margin-top:12px"></div>
+  </details>
+
+  <section class="panel">
+    <h2>다음 단계</h2>
+    <ul style="margin:0 0 14px;padding-left:1.2em">
+      <li>여기서 본 <b>MCS의 효소와 자르는 모양</b>이 뒤에서 벡터를 자를 때 그대로 쓰입니다.</li>
+      <li>다음 탭에서는 넣을 유전자 쪽을 봅니다. 두 수용체의 도메인을 나눠 보고, 어디를 가져올지 정합니다.</li>
+    </ul>
+    <div class="row"><a class="btn" href="domain.html">도메인 지도로 가기</a></div>
+  </section>
+
+  <footer class="foot">모든 계산은 이 브라우저 안에서만 이루어집니다. 차차 © 충남대학교</footer>
+</div>
+
+<script src="dna.js"></script>
+<script src="receptors.js"></script>
+<script src="puc19.js"></script>
+<script src="clone.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var D = DNA, C = CLONE, P = PUC19, S = P.seq, L = S.length;
+  var MCS = C.mcsEnzymes(), SINGLE = {};
+  MCS.forEach(function (v) { SINGLE[v.name] = v; });
+
+  var HITS = [];
+  C.ENZ.forEach(function (e) {
+    var t = S + S.substr(0, e.site.length - 1), i = t.indexOf(e.site);
+    while (i >= 0 && i < L) { HITS.push({ enz: e, pos: i + 1 }); i = t.indexOf(e.site, i + 1); }
+  });
+  function hitsOf(name) { return HITS.filter(function (h) { return h.enz.name === name; }); }
+
+  /* ── 말단이 생기는 모습 ── */
+  /* 자르는 자리: 서열 바로 사이에 빨간 절단선을 긋는다 */
+  function cutSVG(e) {
+    var top = e.site, bot = D.comp(top), n = top.length;
+    var cw = 16, x0 = 40, Wd = x0 + n * cw + 24, Hd = 96;
+    var yT = 30, yB = 60, ct = x0 + e.cut * cw, cb = x0 + (n - e.cut) * cw;
+    var lo = Math.min(ct, cb), hi = Math.max(ct, cb);
+    var s = '<svg viewBox="0 0 ' + Wd + ' ' + Hd + '" style="width:100%;max-width:' + Wd + 'px;height:auto;display:block" role="img" aria-label="' + e.name + ' 자르는 자리">';
+    if (hi > lo) s += '<rect x="' + lo + '" y="' + (yT - 13) + '" width="' + (hi - lo) + '" height="' + (yB - yT + 26) + '" fill="#fff1b8"/>';
+    s += '<text x="' + (x0 - 8) + '" y="' + yT + '" text-anchor="end" dominant-baseline="middle" font-size="12" fill="#5b6878" font-family="JetBrains Mono, monospace">5′</text>';
+    s += '<text x="' + (x0 - 8) + '" y="' + yB + '" text-anchor="end" dominant-baseline="middle" font-size="12" fill="#5b6878" font-family="JetBrains Mono, monospace">3′</text>';
+    s += '<text x="' + (x0 + n * cw + 6) + '" y="' + yT + '" dominant-baseline="middle" font-size="12" fill="#5b6878" font-family="JetBrains Mono, monospace">3′</text>';
+    s += '<text x="' + (x0 + n * cw + 6) + '" y="' + yB + '" dominant-baseline="middle" font-size="12" fill="#5b6878" font-family="JetBrains Mono, monospace">5′</text>';
+    for (var i = 0; i < n; i++) {
+      var cx = x0 + i * cw + cw / 2;
+      s += '<text x="' + cx + '" y="' + yT + '" text-anchor="middle" dominant-baseline="middle" font-size="15" font-weight="700" fill="#26354a" font-family="JetBrains Mono, monospace">' + top[i] + '</text>';
+      s += '<text x="' + cx + '" y="' + yB + '" text-anchor="middle" dominant-baseline="middle" font-size="15" font-weight="700" fill="#8e9aa8" font-family="JetBrains Mono, monospace">' + bot[i] + '</text>';
+      s += '<line x1="' + cx + '" y1="' + (yT + 9) + '" x2="' + cx + '" y2="' + (yB - 9) + '" stroke="#dbe3ec" stroke-width="1"/>';
+    }
+    // 계단 모양 절단선: 위가닥 자르는 자리 → 가운데 → 아래가닥 자르는 자리
+    s += '<path d="M' + ct + ' ' + (yT - 15) + ' L' + ct + ' 45 L' + cb + ' 45 L' + cb + ' ' + (yB + 15) + '" fill="none" stroke="#ef4444" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>';
+    var over = e.cut < n - e.cut ? top.slice(e.cut, n - e.cut) : (n - e.cut < e.cut ? top.slice(n - e.cut, e.cut) : '');
+    var kind = e.cut === n - e.cut ? '평활 말단 · 튀어나오는 염기가 없다'
+      : (e.cut < n - e.cut ? "5′ 점착 말단 · " + over + ' (' + over.length + ' 염기)가 튀어나온다'
+                           : "3′ 점착 말단 · " + over + ' (' + over.length + ' 염기)가 튀어나온다');
+    s += '<text x="' + (Wd / 2) + '" y="' + (Hd - 8) + '" text-anchor="middle" font-size="12" font-weight="700" fill="' + (over ? '#b45309' : '#5b6878') + '">' + kind + '</text>';
+    s += '</svg>';
+    return s;
+  }
+
+  /* ── 설명판 ── */
+  function featCard(f) {
+    var len = f.to - f.from + 1, seq = S.substring(f.from - 1, f.to);
+    var shown = len > 60 ? seq.substring(0, 30) + ' … ' + seq.slice(-30) : seq;
+    return '<h3 style="color:' + f.color + '">' + f.name + '</h3>' +
+      '<p class="sub">' + f.ko + '</p>' +
+      '<dl><dt>위치</dt><dd class="mono">' + f.from + '–' + f.to + '</dd>' +
+      '<dt>길이</dt><dd class="mono">' + len.toLocaleString() + ' bp</dd>' +
+      '<dt>방향</dt><dd>' + (f.strand === -1 ? '아래가닥 (번호가 작아지는 쪽으로 읽힌다)' : f.strand === 1 ? '위가닥' : '방향 없음') + '</dd></dl>' +
+      '<p style="margin:10px 0 0;font-size:14px">' + f.note + '</p>' +
+      '<pre>' + shown + '</pre>';
+  }
+  function enzCard(e, where) {
+    var hs = hitsOf(e.name);
+    return '<h3>' + e.name + '</h3>' +
+      '<p class="sub">인식 서열 (recognition site) ' + e.site + ' · ' + e.ends + ' 말단 · ' + e.temp + ' °C</p>' +
+      cutSVG(e) +
+      '<dl style="margin-top:10px"><dt>pUC19을 자르는 횟수</dt><dd class="mono">' + hs.length + '번</dd>' +
+      (hs.length ? '<dt>자르는 위치</dt><dd class="mono">' + hs.map(function (h) { return h.pos + '번'; }).join(', ') + '</dd>' : '') +
+      (where ? '<dt>지금 본 자리</dt><dd class="mono">' + where + '</dd>' : '') +
+      '<dt>MCS 안에서 한 번만</dt><dd>' + (SINGLE[e.name] ? '예 — 클로닝에 쓸 수 있는 후보' : '아니오') + '</dd></dl>';
+  }
+  var DEFAULT_DETAIL = '<h3>지도 읽는 법</h3>' +
+    '<p class="sub">지도 위에 마우스를 올리면 그 구간의 설명이 여기에 나옵니다.</p>' +
+    '<ul><li><b>색 띠</b> — 그 구간이 무엇이고 어느 방향으로 읽히는지, 서열의 앞뒤를 보여 줍니다.</li>' +
+    '<li><b>바깥 눈금</b> — 제한효소 자리입니다. 어떻게 잘라 어떤 말단이 생기는지 보여 줍니다.</li>' +
+    '<li>초록색 눈금은 MCS 안에서 <b>딱 한 번만</b> 자르는 효소입니다.</li></ul>';
+  $('detail').innerHTML = DEFAULT_DETAIL;
+
+  /* ── 원형 지도 ── */
+  (function () {
+    var VB = 600, c = 290, R = 180;
+    var svg = '<svg class="map" viewBox="0 0 ' + VB + ' ' + VB + '" role="img" aria-label="pUC19 원형 지도">';
+    svg += '<defs><filter id="sh" x="-20%" y="-20%" width="140%" height="140%">' +
+      '<feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#26354a" flood-opacity="0.13"/></filter></defs>';
+    function ang(p) { return (p - 1) / L * 2 * Math.PI - Math.PI / 2; }
+    function pt(p, r) { var a = ang(p); return [c + r * Math.cos(a), c + r * Math.sin(a)]; }
+    svg += '<circle cx="' + c + '" cy="' + c + '" r="' + R + '" fill="none" stroke="#eef2f7" stroke-width="22"/>';
+    svg += '<circle cx="' + c + '" cy="' + c + '" r="' + R + '" fill="none" stroke="#dbe3ec" stroke-width="1.5"/>';
+    // 배경 클릭판은 특징보다 먼저 깔아 둔다 (위에 깔면 마우스 올리기를 가로챈다)
+    svg += '<circle class="bgclick" cx="' + c + '" cy="' + c + '" r="' + R + '" fill="none" stroke="transparent" stroke-width="26" style="cursor:crosshair"/>';
+    for (var g = 0; g < L; g += 250) {
+      var big = g % 500 === 0;
+      var a1 = pt(g + 1, R - 13), a2 = pt(g + 1, R - (big ? 19 : 16));
+      svg += '<line x1="' + a1[0] + '" y1="' + a1[1] + '" x2="' + a2[0] + '" y2="' + a2[1] + '" stroke="#c8d2dc" stroke-width="' + (big ? 1.4 : 0.8) + '" pointer-events="none"/>';
+      if (big) { var tl = pt(g + 1, R - 32); svg += '<text x="' + tl[0] + '" y="' + tl[1] + '" text-anchor="middle" dominant-baseline="middle" font-size="10.5" fill="#aab4c0" pointer-events="none">' + (g || 1) + '</text>'; }
+    }
+    /* 짧은 구간은 눈에 보이도록 최소 폭을 주고, 이름표는 오른쪽 한 줄로 빼서 안내선으로 잇는다 */
+    var LABX = c + R + 44;
+    var LABY = { 'MCS': c - 136, 'lac 오페레이터': c - 92, 'lac 프로모터': c - 48 };
+    P.features.forEach(function (f, fi) {
+      var span = (f.to - f.from + 1) / L, small = span < 0.02;
+      var mid = (f.from + f.to) / 2;
+      var minSpan = L * 0.016;
+      var from = small ? mid - minSpan / 2 : f.from, to = small ? mid + minSpan / 2 : f.to;
+      var r = f.name === 'MCS' ? R + 2 : R;
+      var a = pt(from, r), b = pt(to, r), large = (to - from) / L > 0.5 ? 1 : 0;
+      var wdt = f.name === 'MCS' ? 20 : small ? 15 : 17;
+      svg += '<path class="feat" data-feat="' + fi + '" d="M' + a[0] + ' ' + a[1] + ' A' + r + ' ' + r + ' 0 ' + large + ' 1 ' + b[0] + ' ' + b[1] +
+        '" fill="none" stroke="' + f.color + '" stroke-width="' + wdt + '" stroke-linecap="butt" filter="url(#sh)"><title>' + f.name + ' ' + f.from + '–' + f.to + '</title></path>';
+      if (f.strand === -1 && !small) {
+        var h = pt(f.from, r), h2 = pt(f.from + L * 0.02, r - 11), h3 = pt(f.from + L * 0.02, r + 11);
+        svg += '<path d="M' + h[0] + ' ' + h[1] + ' L' + h2[0] + ' ' + h2[1] + ' L' + h3[0] + ' ' + h3[1] + 'Z" fill="' + f.color + '" pointer-events="none"/>';
+      }
+      if (LABY[f.name] != null) {
+        var ly = LABY[f.name], p0 = pt(mid, R + 11), p1 = pt(mid, R + 24);
+        svg += '<polyline points="' + p0[0] + ',' + p0[1] + ' ' + p1[0] + ',' + p1[1] + ' ' + (LABX - 6) + ',' + ly + '" fill="none" stroke="' + f.color + '" stroke-width="1.4" pointer-events="none"/>';
+        svg += '<circle cx="' + p0[0] + '" cy="' + p0[1] + '" r="2.6" fill="' + f.color + '" pointer-events="none"/>';
+        svg += '<text x="' + LABX + '" y="' + ly + '" text-anchor="start" dominant-baseline="middle" font-size="13.5" font-weight="700" fill="' + f.color + '" pointer-events="none">' + f.name.replace('lac ', '') + '</text>';
+      } else {
+        var inn = pt(mid, R - 50);
+        svg += '<text x="' + inn[0] + '" y="' + inn[1] + '" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="700" fill="' + f.color + '" pointer-events="none">' + f.name + '</text>';
+      }
+    });
+    HITS.forEach(function (h) {
+      var single = !!SINGLE[h.enz.name];
+      var a = pt(h.pos, R + 11), b = pt(h.pos, R + (single ? 26 : 19));
+      svg += '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] +
+        '" stroke="' + (single ? '#10b981' : '#aab4c0') + '" stroke-width="' + (single ? 2.6 : 1.4) + '" stroke-linecap="round" pointer-events="none"/>';
+      var m = pt(h.pos, R + 18);
+      svg += '<circle class="tickhit" data-enz="' + h.enz.name + '" data-pos="' + h.pos + '" cx="' + m[0] + '" cy="' + m[1] + '" r="8"><title>' + h.enz.name + ' ' + h.pos + '</title></circle>';
+    });
+    svg += '<text x="' + c + '" y="' + (c - 10) + '" text-anchor="middle" font-size="29" font-weight="700" fill="#26354a" pointer-events="none">pUC19</text>';
+    svg += '<text x="' + c + '" y="' + (c + 18) + '" text-anchor="middle" font-size="14.5" fill="#8e9aa8" pointer-events="none">2,686 bp</text>';
+    svg += '</svg>';
+    $('map').innerHTML = svg;
+
+    var m = $('map');
+    m.addEventListener('mouseover', function (ev) {
+      var t = ev.target;
+      if (t.dataset && t.dataset.feat != null) { $('detail').innerHTML = featCard(P.features[+t.dataset.feat]); return; }
+      if (t.dataset && t.dataset.enz) { $('detail').innerHTML = enzCard(C.enz(t.dataset.enz), t.dataset.pos + '번'); return; }
+    });
+    m.addEventListener('mouseleave', function () { $('detail').innerHTML = DEFAULT_DETAIL; });
+    m.addEventListener('click', function (ev) {
+      var t = ev.target;
+      if (t.dataset && t.dataset.pos) { gotoZoom(+t.dataset.pos); return; }
+      if (t.dataset && t.dataset.feat != null) { var f = P.features[+t.dataset.feat]; gotoZoom(Math.round((f.from + f.to) / 2)); return; }
+      var svgEl = m.querySelector('svg'), rr = svgEl.getBoundingClientRect();
+      var x = (ev.clientX - rr.left) / rr.width * VB - c, y = (ev.clientY - rr.top) / rr.height * VB - c;
+      var d = Math.sqrt(x * x + y * y);
+      if (d < R - 32 || d > R + 32) return;
+      var th = Math.atan2(y, x) + Math.PI / 2;
+      if (th < 0) th += 2 * Math.PI;
+      gotoZoom(Math.round(th / (2 * Math.PI) * L) + 1);
+    });
+  })();
+
+  $('legend').innerHTML = P.features.map(function (f) {
+    return '<span><i style="background:' + f.color + '"></i>' + f.name + '</span>';
+  }).join('') + '<span><i style="background:#10b981;width:4px;border-radius:2px"></i>MCS 단일 절단 자리</span>';
+
+  /* ── 서열 확대 보기 ── */
+  var PER = 60;
+  function drawZoom(prio) {
+    var w = +$('zw').value, cen = Math.max(1, Math.min(L, +$('zc').value || 1));
+    var from = Math.max(1, cen - Math.floor(w / 2)), to = Math.min(L, from + w - 1);
+    from = Math.max(1, to - w + 1);
+    var out = '';
+    for (var b0 = from; b0 <= to; b0 += PER) out += block(b0, Math.min(to, b0 + PER - 1), prio) + '\n';
+    $('zoom').querySelector('pre').innerHTML = out;
+  }
+  function block(from, to, prio) {
+    var top = S.substring(from - 1, to), bot = D.comp(top), n = top.length;
+    var mark = new Array(n).fill(null), cutT = new Array(n).fill(null), cutB = new Array(n).fill(null);
+    var rowsLab = [];
+    HITS.filter(function (h) { return h.pos + h.enz.site.length - 1 >= from && h.pos <= to; })
+      .sort(function (a, b) {
+        // 보고 있는 효소를 먼저 칠해, 인식 서열이 겹쳐도 6 염기가 모두 잡히게 한다
+        var pa = prio && a.enz.name === prio ? 0 : 1, pb = prio && b.enz.name === prio ? 0 : 1;
+        return pa !== pb ? pa - pb : a.pos - b.pos;
+      })
+      .forEach(function (h) {
+        var off = h.pos - from, nm = h.enz.name;
+        for (var i = 0; i < h.enz.site.length; i++) { var k = off + i; if (k >= 0 && k < n && !mark[k]) mark[k] = nm; }
+        var ct = off + h.enz.cut, cb = off + h.enz.site.length - h.enz.cut;
+        if (ct >= 0 && ct < n) cutT[ct] = nm;
+        if (cb >= 0 && cb < n) cutB[cb] = nm;
+        var r = 0;
+        for (;;) {
+          if (!rowsLab[r]) rowsLab[r] = new Array(n).fill(null);
+          var free = true;
+          for (var j = Math.max(0, off - 1); j <= Math.min(n - 1, off + nm.length); j++) if (rowsLab[r][j]) { free = false; break; }
+          if (free) break;
+          r++;
+        }
+        for (var q = 0; q < nm.length; q++) { var pp = off + q; if (pp >= 0 && pp < n) rowsLab[r][pp] = { ch: nm[q], enz: nm }; }
+      });
+    function runs(arr, render) {
+      var out = '', i = 0;
+      while (i < arr.length) {
+        var v = arr[i] && (arr[i].enz || arr[i]);
+        if (!v) { var j0 = i; while (j0 < arr.length && !(arr[j0] && (arr[j0].enz || arr[j0]))) j0++; out += render(null, i, j0); i = j0; continue; }
+        var j = i; while (j < arr.length && arr[j] && (arr[j].enz || arr[j]) === v) j++;
+        out += render(v, i, j); i = j;
+      }
+      return out;
+    }
+    var gut = '      ', html = '';
+    rowsLab.forEach(function (row) {
+      html += gut + '   ' + runs(row, function (enz, a, b) {
+        var txt = ''; for (var k = a; k < b; k++) txt += row[k] ? row[k].ch : ' ';
+        return enz ? '<span class="lab" data-enz="' + enz + '">' + txt + '</span>' : txt;
+      }) + '\n';
+    });
+    html += gut + '   ' + runs(cutT, function (enz, a, b) {
+      var t = ''; for (var k = a; k < b; k++) t += cutT[k] ? '▼' : ' ';
+      return enz ? '<span class="cut" data-enz="' + enz + '">' + t + '</span>' : t;
+    }) + '\n';
+    function strandRow(str, label, numA, numB) {
+      return (numA != null ? String(numA).padStart(5, ' ') : '     ') + ' ' + label + ' ' + runs(mark, function (enz, a, b) {
+        var t = str.substring(a, b);
+        return enz ? '<span class="rs' + (SINGLE[enz] ? ' single' : '') + '" data-enz="' + enz + '">' + t + '</span>' : t;
+      }) + (numB != null ? ' ' + numB : '');
+    }
+    html += strandRow(top, "5′", from, to) + '\n';
+    html += strandRow(bot, "3′", null, null) + '\n';
+    html += gut + '   ' + runs(cutB, function (enz, a, b) {
+      var t = ''; for (var k = a; k < b; k++) t += cutB[k] ? '▲' : ' ';
+      return enz ? '<span class="cut" data-enz="' + enz + '">' + t + '</span>' : t;
+    }) + '\n';
+    return html;
+  }
+  function gotoZoom(pos) {
+    $('zc').value = pos; drawZoom();
+    $('zoom').scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+  ['zc', 'zw'].forEach(function (k) { $(k).addEventListener('input', drawZoom); });
+  $('zp').addEventListener('change', function () { $('zc').value = $('zp').value; drawZoom(); });
+  $('zl').addEventListener('click', function () { $('zc').value = Math.max(1, (+$('zc').value || 1) - 60); drawZoom(); });
+  $('zr').addEventListener('click', function () { $('zc').value = Math.min(L, (+$('zc').value || 1) + 60); drawZoom(); });
+
+  var ZDEF = '<p class="sub" style="margin:0">효소 이름이나 칠해진 서열에 마우스를 올리면, 두 가닥이 함께 칠해지고 어떻게 잘리는지 여기에 나옵니다.</p>';
+  $('zdetail').innerHTML = ZDEF;
+  function lightOn(root, name) { root.querySelectorAll('[data-enz="' + name + '"]').forEach(function (el) { el.classList.add('on'); }); }
+  function lightOff(root) { root.querySelectorAll('.on').forEach(function (el) { el.classList.remove('on'); }); }
+  var zoomPrio = null;
+  $('zoom').addEventListener('mouseover', function (ev) {
+    var el = ev.target.closest('[data-enz]'); if (!el) return;
+    var name = el.dataset.enz;
+    if (name !== zoomPrio) { zoomPrio = name; drawZoom(name); }
+    lightOff($('zoom')); lightOn($('zoom'), name);
+    $('zdetail').innerHTML = enzCard(C.enz(name));
+  });
+  $('zoom').addEventListener('mouseleave', function () {
+    zoomPrio = null; drawZoom(); $('zdetail').innerHTML = ZDEF;
+  });
+  drawZoom();
+
+  /* ── 전체 서열 ── */
+  function drawFull(prio) {
+    var only = $('onlySingle').checked;
+    var mark = new Array(L).fill(null);
+    var ordered = HITS.slice().sort(function (a, b) {
+      var pa = prio && a.enz.name === prio ? 0 : 1, pb = prio && b.enz.name === prio ? 0 : 1;
+      return pa !== pb ? pa - pb : a.pos - b.pos;
+    });
+    ordered.forEach(function (h) {
+      if (only && !SINGLE[h.enz.name]) return;
+      for (var i = 0; i < h.enz.site.length; i++) { var k = (h.pos - 1 + i) % L; if (!mark[k]) mark[k] = h.enz.name; }
+    });
+    var out = '';
+    for (var line = 0; line < L; line += 60) {
+      var end = Math.min(L, line + 60);
+      out += '<span class="num">' + String(line + 1).padStart(5, ' ') + '</span>  ';
+      var i = line;
+      while (i < end) {
+        if (!mark[i]) { var j2 = i; while (j2 < end && !mark[j2]) j2++; out += S.substring(i, j2); i = j2; }
+        else { var j = i; while (j < end && mark[j] === mark[i]) j++;
+          out += '<span class="rs' + (SINGLE[mark[i]] ? ' single' : '') + '" data-enz="' + mark[i] + '">' + S.substring(i, j) + '</span>'; i = j; }
+      }
+      out += '  <span class="num">' + end + '</span>\n';
+    }
+    $('fullSeq').querySelector('pre').innerHTML = out;
+  }
+  $('onlySingle').addEventListener('change', drawFull);
+  var FDEF = '<p class="sub" style="margin:0">칠해진 자리에 마우스를 올리면 어떤 효소인지, 어떻게 잘리는지 여기에 나옵니다.</p>';
+  $('fdetail').innerHTML = FDEF;
+  var fullPrio = null;
+  $('fullSeq').addEventListener('mouseover', function (ev) {
+    var el = ev.target.closest('[data-enz]'); if (!el) return;
+    var name = el.dataset.enz;
+    if (name !== fullPrio) { fullPrio = name; drawFull(name); }
+    lightOff($('fullSeq')); lightOn($('fullSeq'), name);
+    $('fdetail').innerHTML = enzCard(C.enz(name));
+  });
+  $('fullSeq').addEventListener('mouseleave', function () {
+    fullPrio = null; drawFull(); $('fdetail').innerHTML = FDEF;
+  });
+  drawFull();
+
+  /* ── 제한효소 표 ── */
+  $('etable').innerHTML = '<tr><th>효소</th><th class="m">인식 서열<br><span style="font-weight:400">recognition site</span></th><th>말단</th>' +
+    '<th class="m">자르는 횟수</th><th class="m">자르는 위치</th><th class="m">반응 온도</th></tr>' +
+    C.ENZ.map(function (e) {
+      var hs = hitsOf(e.name), good = !!SINGLE[e.name];
+      return '<tr class="erow ' + (good ? 'good' : hs.length ? '' : 'dim') + '" data-enz="' + e.name + '"><td><b>' + e.name + '</b></td>' +
+        '<td class="m">' + e.site + '</td><td>' + e.ends + '</td>' +
+        '<td class="m">' + hs.length + '번</td>' +
+        '<td class="m">' + (hs.length ? hs.map(function (h) { return h.pos; }).join(', ') + '번' : '–') + '</td>' +
+        '<td class="m">' + e.temp + ' °C</td></tr>';
+    }).join('');
+  var EDEF = '<p class="sub" style="margin:0">줄 위에 마우스를 올리면 자르는 모양과 생기는 말단이 여기에 나옵니다.</p>';
+  $('edetail').innerHTML = EDEF;
+  $('etable').addEventListener('mouseover', function (ev) {
+    var t = ev.target.closest('tr[data-enz]'); if (!t) return;
+    $('edetail').innerHTML = enzCard(C.enz(t.dataset.enz));
+  });
+
+  /* 상자 아래를 끌어 높이 조절 */
+  C.attachGrip($('zoom'), 140);
+  C.attachGrip($('fullSeq'), 160);
+})();
+</script>
+</body>
+</html>

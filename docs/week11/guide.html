@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&a.host&&a.host!==location.host){a.target='_blank';a.rel='noopener';}});</script>
+<title>실습 안내</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+.doc { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+@media (max-width: 560px) { .doc { padding: 16px 14px; } }
+.doc h1 { margin-bottom: 14px; }
+.doc h2 { margin: 30px 0 10px; padding-top: 6px; border-top: 1px solid var(--line); }
+.doc h3 { font: 700 17px/1.4 var(--font-body); margin: 22px 0 8px; }
+.doc p, .doc li { font-size: 15.5px; }
+.doc ul, .doc ol { padding-left: 1.4em; }
+.doc li { margin: 3px 0; }
+.doc table { border-collapse: collapse; margin: 10px 0 14px; font-size: 14.5px; display: block; overflow-x: auto; max-width: 100%; }
+.doc th, .doc td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+.doc th { background: #f6f8fb; }
+.doc td:first-child, .doc th:first-child { white-space: nowrap; }
+.doc blockquote { margin: 12px 0; padding: 10px 16px; background: var(--blue-soft); border-left: 4px solid var(--blue); border-radius: 8px; }
+.doc blockquote p, .doc blockquote li { margin: 4px 0; }
+.doc code { font: 13.5px var(--font-mono); background: #f1f4f8; padding: 1px 5px; border-radius: 5px; }
+.doc pre { background: #f6f8fb; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; overflow-x: auto; }
+.doc pre code { background: none; padding: 0; word-break: normal; }
+.doc img { max-width: 100%; height: auto; }
+.doc details { background: #fbfcfe; border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; margin: 10px 0; }
+.doc summary { cursor: pointer; font-weight: 700; }
+.doc hr { border: 0; border-top: 1px solid var(--line); margin: 24px 0; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.tabs a { font-size: 14px; text-decoration: none; color: var(--ink-soft); padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); }
+.tabs a[aria-current="page"] { color: var(--blue); border-color: var(--blue); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home" href="index.html"><img src="chacha.png" alt="">11주차 · 도메인 교환 클로닝</a>
+    <nav class="nav"><a href="plasmid.html">플라스미드</a><a href="domain.html">도메인 지도</a><a href="primer.html">설계 및 1차 PCR</a><a href="enzyme.html">연결 PCR 프라이머</a><a href="sew.html">연결 PCR</a><a href="clone.html">클로닝</a></nav>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <article class="doc" id="doc"><p class="hint">불러오는 중…</p></article>
+  <footer class="foot">원본 파일: <span id="src" class="mono">week11/README.md</span></footer>
+</div>
+
+<script src="vendor/marked.min.js"></script>
+<script src="guides.js"></script>
+<script>
+(function () {
+  var DOCS = {
+    week11: { file: 'week11/README.md', name: '11주차 따라하기' },
+    worksheet: { file: 'week11/worksheet.md', name: '기록지' }
+  };
+  var BY_FILE = { 'README.md': 'week11', 'worksheet.md': 'worksheet' };
+  var key = new URLSearchParams(location.search).get('doc');
+  if (!DOCS[key]) key = 'week11';
+  var d = DOCS[key];
+  document.getElementById('tabs').innerHTML = Object.keys(DOCS).map(function (k) {
+    return '<a href="guide.html?doc=' + k + '"' + (k === key ? ' aria-current="page"' : '') + '>' + DOCS[k].name + '</a>';
+  }).join('');
+  document.getElementById('src').textContent = d.file;
+
+  function fix(root) {
+    root.querySelectorAll('a[href]').forEach(function (a) {
+      var h = a.getAttribute('href');
+      var m = h.match(/^(?:\.\/)?(README\.md|worksheet\.md)(#.*)?$/);
+      if (m) { a.setAttribute('href', 'guide.html?doc=' + BY_FILE[m[1]] + (m[2] || '')); return; }
+      var t = h.match(/^(?:\.\.\/)+docs\/([\w-]+\.html.*)$/);
+      if (t) a.setAttribute('href', t[1]);
+    });
+    root.querySelectorAll('img[src]').forEach(function (im) {
+      var s = im.getAttribute('src'), f = s.split('/').pop();
+      if (/^\.\.\/images\//.test(s)) im.setAttribute('src', f);
+    });
+    // 제목에 id를 달아 #링크가 동작하게
+    root.querySelectorAll('h1, h2, h3').forEach(function (h) { if (!h.id) h.id = h.textContent.trim().toLowerCase().replace(/[^\w가-힣]+/g, '-'); });
+  }
+
+  // 서버로 띄우면 파일을 그대로 읽고, file:// 로 열면 guides.js 에 내장한 사본을 쓴다
+  var saved = (window.GUIDES || {})[d.file];
+  function source() {
+    if (location.protocol === 'file:' && saved) return Promise.resolve(saved);
+    return fetch(d.file, { cache: 'no-cache' }).then(function (r) {
+      if (!r.ok) throw new Error(r.status);
+      return r.text();
+    }).catch(function (e) {
+      if (saved) return saved;
+      throw e;
+    });
+  }
+
+  source().then(function (md) {
+    var el = document.getElementById('doc');
+    el.innerHTML = marked.parse(md);
+    fix(el);
+    var h1 = el.querySelector('h1');
+    document.title = (h1 ? h1.textContent : d.name);
+    if (location.hash) { var t = document.getElementById(decodeURIComponent(location.hash.slice(1))); if (t) t.scrollIntoView(); }
+  }).catch(function () {
+    document.getElementById('doc').innerHTML = '<p>안내문을 불러오지 못했습니다. <span class="mono">docs/' + d.file + '</span> 파일을 직접 열어 보세요.</p>';
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&a.host&&a.host!==location.host){a.target='_blank';a.rel='noopener';}});</script>
+<title>역상보 도구</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+.out { display: grid; gap: 8px; margin-top: 16px; }
+.line { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfe; }
+.line.main { border: 2px solid var(--blue); background: var(--blue-soft); }
+.line .name { font-size: 13.5px; font-weight: 700; color: var(--ink-soft); }
+.line.main .name { color: var(--blue); }
+.line .seq { font-family: var(--font-mono); font-size: 15px; word-break: break-all; }
+.line .seq small { color: var(--ink-soft); font-size: 12px; }
+@media (max-width: 560px) { .line { grid-template-columns: minmax(0, 1fr) auto; } .line .name { grid-column: 1 / -1; } }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 14px; color: var(--ink-soft); margin-top: 10px; }
+.stats b { color: var(--ink); font-family: var(--font-mono); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home" href="index.html"><img src="chacha.png" alt="">프라이머 설계 실습</a>
+    <nav class="nav"><a href="pinball.html">유전자 핀볼</a><a href="align.html">엑손 찾기</a><a href="revcomp.html" aria-current="page">역상보</a><a href="tm.html">Tm 계산기</a><a href="viewer.html">서열 뷰어</a><a href="check.html">프라이머 점검</a><a href="pcr.html">PCR 시뮬레이션</a><a href="score.html">비교평가</a></nav>
+  </div>
+
+  <h1>역상보 도구</h1>
+  <p class="lead">DNA 서열을 넣으면 상보·역순·역상보를 한 번에 보여 줍니다. 손으로 먼저 써 보고 확인용으로 쓰세요.</p>
+
+  <section class="panel">
+    <label class="field" for="seq">서열(5′→3′ 방향으로 입력)</label>
+    <textarea id="seq" spellcheck="false" placeholder="예: ATGCCTAGG"></textarea>
+    <p class="hint">공백·줄바꿈·숫자와 FASTA 첫 줄(&gt;로 시작)은 자동으로 무시합니다.</p>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="run" type="button">변환하기</button>
+      <button class="btn ghost" id="ex" type="button">예시 넣기</button>
+    </div>
+    <div id="err1" class="msg err" hidden></div>
+    <div id="out1" hidden>
+      <div class="out">
+        <div class="line"><span class="name">입력</span><span class="seq" id="o-in"></span><span></span></div>
+        <div class="line"><span class="name">상보</span><span class="seq" id="o-c"></span><span></span></div>
+        <div class="line"><span class="name">역순</span><span class="seq" id="o-r"></span><span></span></div>
+        <div class="line main"><span class="name">역상보 ★</span><span class="seq" id="o-rc"></span><button class="btn small" id="copy" type="button">복사</button></div>
+      </div>
+      <div class="stats">
+        <span>길이 <b id="s-len"></b></span>
+        <span>GC 비율 <b id="s-gc"></b></span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">모든 계산은 이 브라우저 안에서만 이루어지고, 입력한 서열은 어디에도 전송되지 않습니다.</footer>
+</div>
+
+<script src="dna.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function run() {
+    var s = DNA.clean($('seq').value), e = DNA.check(s);
+    if (e) { $('err1').textContent = e; $('err1').hidden = false; $('out1').hidden = true; return; }
+    $('err1').hidden = true; $('out1').hidden = false;
+    var c = DNA.comp(s), rc = DNA.rc(s);
+    $('o-in').innerHTML = '<small>5′-</small>' + s + '<small>-3′</small>';
+    $('o-c').innerHTML = '<small>3′-</small>' + c + '<small>-5′</small>';
+    $('o-r').innerHTML = '<small>3′-</small>' + DNA.rev(s) + '<small>-5′</small>';
+    $('o-rc').innerHTML = '<small>5′-</small>' + rc + '<small>-3′</small>';
+    $('o-rc').dataset.plain = rc;
+    $('s-len').textContent = s.length + ' nt';
+    $('s-gc').textContent = DNA.gcPercent(s).toFixed(1) + '%';
+    $('copy').textContent = '복사';
+  }
+  $('run').addEventListener('click', run);
+  $('ex').addEventListener('click', function () { $('seq').value = 'ATGCCTAGG'; run(); });
+  $('copy').addEventListener('click', function () {
+    var b = this, t = $('o-rc').dataset.plain;
+    function sel() { var r = document.createRange(); r.selectNodeContents($('o-rc')); var w = getSelection(); w.removeAllRanges(); w.addRange(r); b.textContent = 'Ctrl+C'; }
+    try { navigator.clipboard.writeText(t).then(function () { b.textContent = '복사됨'; }, sel); } catch (x) { sel(); }
+  });
+})();
+</script>
+</body>
+</html>

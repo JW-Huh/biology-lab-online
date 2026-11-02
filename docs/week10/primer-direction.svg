@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 260" font-family="Malgun Gothic, Apple SD Gothic Neo, Noto Sans KR, sans-serif">
+  <rect width="760" height="260" fill="#ffffff"/>
+  <!-- 증폭 구간 -->
+  <rect x="200" y="78" width="360" height="74" fill="#fff6d6"/>
+  <text x="380" y="248" text-anchor="middle" font-size="15" fill="#8a6d00">↔ PCR로 복사되는 구간 (PCR 산물)</text>
+  <line x1="200" y1="160" x2="200" y2="232" stroke="#c9a400" stroke-dasharray="4 4"/>
+  <line x1="560" y1="160" x2="560" y2="232" stroke="#c9a400" stroke-dasharray="4 4"/>
+  <!-- 두 가닥 -->
+  <line x1="60" y1="96" x2="700" y2="96" stroke="#26354a" stroke-width="5"/>
+  <line x1="60" y1="134" x2="700" y2="134" stroke="#26354a" stroke-width="5"/>
+  <text x="40" y="101" text-anchor="end" font-size="16" font-weight="bold" fill="#26354a">5′</text>
+  <text x="716" y="101" font-size="16" font-weight="bold" fill="#26354a">3′</text>
+  <text x="40" y="139" text-anchor="end" font-size="16" font-weight="bold" fill="#26354a">3′</text>
+  <text x="716" y="139" font-size="16" font-weight="bold" fill="#26354a">5′</text>
+  <text x="100" y="86" font-size="13" fill="#5b6878">윗가닥 (NCBI에 적힌 서열)</text>
+  <text x="100" y="156" font-size="13" fill="#5b6878">아랫가닥 (짝 가닥)</text>
+  <!-- Forward: 아랫가닥에 붙어서 오른쪽으로 -->
+  <rect x="200" y="114" width="90" height="12" rx="3" fill="#1f5fbf"/>
+  <path d="M290 120 H350" stroke="#1f5fbf" stroke-width="3" stroke-dasharray="6 5"/>
+  <path d="M350 112 L366 120 L350 128 Z" fill="#1f5fbf"/>
+  <text x="200" y="196" font-size="15" font-weight="bold" fill="#1f5fbf">Forward 프라이머</text>
+  <text x="200" y="215" font-size="13" fill="#1f5fbf">윗가닥과 같은 서열 → 오른쪽으로 연장</text>
+  <!-- Reverse: 윗가닥에 붙어서 왼쪽으로 -->
+  <rect x="470" y="104" width="90" height="12" rx="3" fill="#2f9e7a"/>
+  <path d="M470 110 H410" stroke="#2f9e7a" stroke-width="3" stroke-dasharray="6 5"/>
+  <path d="M410 102 L394 110 L410 118 Z" fill="#2f9e7a"/>
+  <text x="560" y="40" text-anchor="end" font-size="15" font-weight="bold" fill="#2f9e7a">Reverse 프라이머</text>
+  <text x="560" y="59" text-anchor="end" font-size="13" fill="#2f9e7a">윗가닥의 역상보 ← 왼쪽으로 연장</text>
+</svg>

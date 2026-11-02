@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&a.host&&a.host!==location.host){a.target='_blank';a.rel='noopener';}});</script>
+<title>Tm 계산기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 560px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.tbl-wrap { overflow-x: auto; margin-top: 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { border-bottom: 1px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top; }
+th { background: #f6f8fb; font-size: 13px; color: var(--ink-soft); }
+td.num { font-family: var(--font-mono); font-size: 16px; font-weight: 700; white-space: nowrap; }
+td .f { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-soft); display: block; margin-top: 4px; }
+details { margin-top: 14px; }
+summary { cursor: pointer; font-weight: 700; font-size: 14.5px; color: var(--blue); }
+.cond { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 10px; }
+.cond input { font-family: var(--font-mono); }
+.nn { font-family: var(--font-mono); font-size: 12.5px; display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.nn span { background: #f6f8fb; border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home" href="index.html"><img src="chacha.png" alt="">프라이머 설계 실습</a>
+    <nav class="nav"><a href="pinball.html">유전자 핀볼</a><a href="align.html">엑손 찾기</a><a href="revcomp.html">역상보</a><a href="tm.html" aria-current="page">Tm 계산기</a><a href="viewer.html">서열 뷰어</a><a href="check.html">프라이머 점검</a><a href="pcr.html">PCR 시뮬레이션</a><a href="score.html">비교평가</a></nav>
+  </div>
+
+  <h1>Tm 계산기</h1>
+  <p class="lead">같은 프라이머라도 계산법에 따라 Tm이 다르게 나옵니다. 세 가지 식으로 한 번에 계산해서 비교해 보세요.</p>
+
+  <section class="panel">
+    <div class="two">
+      <div><label class="field" for="f">Forward 프라이머(5′→3′)</label><input type="text" id="f" spellcheck="false" autocomplete="off"></div>
+      <div><label class="field" for="r">Reverse 프라이머(5′→3′, 선택)</label><input type="text" id="r" spellcheck="false" autocomplete="off"></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="go" type="button">계산하기</button>
+      <button class="btn ghost" id="ex" type="button">예시 넣기</button>
+    </div>
+    <div id="err" class="msg err" hidden></div>
+
+    <details id="condBox">
+      <summary>반응 조건(기본값: 일반적인 Taq PCR 버퍼)</summary>
+      <p class="hint">대부분의 Taq 버퍼·프리믹스 조성입니다. 따로 바꾸지 않아도 됩니다.</p>
+      <div class="cond">
+        <div><label class="field" for="c-mono">K⁺/Na⁺ (mM)</label><input type="text" id="c-mono" value="50"></div>
+        <div><label class="field" for="c-mg">Mg²⁺ (mM)</label><input type="text" id="c-mg" value="1.5"></div>
+        <div><label class="field" for="c-dntp">dNTP 합계(mM)</label><input type="text" id="c-dntp" value="0.8"></div>
+        <div><label class="field" for="c-primer">프라이머(µM)</label><input type="text" id="c-primer" value="0.5"></div>
+      </div>
+    </details>
+  </section>
+
+  <section class="panel" id="out" hidden>
+    <h2>결과</h2>
+    <div class="tbl-wrap"><table id="tbl"></table></div>
+    <div id="pair" class="msg info" hidden></div>
+    <div id="nnDetail"></div>
+  </section>
+
+  <section class="panel">
+    <h2>세 가지 계산법</h2>
+    <p><b>① Wallace rule</b> · Tm = 2 × (A+T) + 4 × (G+C)<br>가장 간단한 암산용 식입니다. 14 nt 이하에서만 대략 맞고, 길어질수록 Tm을 크게 부풀립니다.</p>
+    <p><b>② 기본 GC 함량 식(Marmur–Doty 계열)</b> · Tm = 64.9 + 41 × (G+C − 16.4) / N<br>길이 N으로 나누기 때문에 긴 서열에서 Tm이 일정 값으로 수렴하는 경향을 반영합니다. 13 nt 이상에서 씁니다.</p>
+    <p><b>③ Nearest-neighbor 모델(현재 표준)</b> · Tm = ΔH / (ΔS + R ln(C/4)) − 273.15, 여기에 염 보정<br>서열을 이웃한 두 염기쌍씩 잘라 각각의 ΔH, ΔS를 더합니다. 같은 GC 비율이라도 염기 순서에 따라 Tm이 달라지는 것까지 반영합니다. 프라이머 설계 프로그램과 시약 회사 계산기가 대부분 이 방식을 씁니다.</p>
+    <p class="hint">여기서는 SantaLucia(1998) 값과 Mg²⁺ 보정(von Ahsen 2001)을 사용합니다. 프라이머 농도가 다르면 Tm도 달라집니다. <b>설계 기준</b> 값은 설계 프로그램들이 흔히 쓰는 프라이머 50 nM 조건이라 실제 반응(0.2–0.5 µM)보다 2–3 °C 낮게 나옵니다. 이 실습의 Tm 목표(58–62 °C)는 설계 기준 값으로 맞춥니다.</p>
+  </section>
+
+  <footer class="foot">모든 계산은 이 브라우저 안에서만 이루어집니다.</footer>
+</div>
+
+<script src="dna.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function num(id, d) { var v = parseFloat($(id).value); return isFinite(v) && v >= 0 ? v : d; }
+
+  function row(name, s) {
+    var at = (s.match(/[AT]/g) || []).length, gc = (s.match(/[GC]/g) || []).length, N = s.length;
+    var cond = { mono: num('c-mono', 50), mg: num('c-mg', 1.5), dntp: num('c-dntp', 0.8), primer: num('c-primer', 0.5) };
+    var w = DNA.tmWallace(s), b = DNA.tmBasic(s), nn = DNA.tmNN(s, cond), pb = DNA.tmNN(s, DNA.DESIGN);
+    return {
+      name: name, s: s, nn: nn,
+      html: '<tr><td><b>' + name + '</b><span class="f">' + s + '</span><span class="f">N=' + N + ', A+T=' + at + ', G+C=' + gc + '</span></td>' +
+        '<td class="num">' + w.toFixed(0) + ' °C<span class="f">2×' + at + ' + 4×' + gc + '</span></td>' +
+        '<td class="num">' + b.toFixed(1) + ' °C<span class="f">64.9 + 41×(' + gc + '−16.4)/' + N + '</span></td>' +
+        '<td class="num">' + (nn ? nn.tm.toFixed(1) + ' °C' : '–') +
+          (nn ? '<span class="f">ΔH ' + nn.dH.toFixed(1) + ' kcal/mol, ΔS ' + nn.dSsalt.toFixed(1) + ' cal/K·mol</span><span class="f">설계 기준(50 nM): ' + pb.tm.toFixed(1) + ' °C</span>' : '<span class="f">A, C, G, T만 계산</span>') + '</td></tr>'
+    };
+  }
+
+  function run() {
+    var f = DNA.clean($('f').value), r = DNA.clean($('r').value);
+    var e = DNA.check(f) || (r ? DNA.check(r) : '');
+    if (e) { $('err').textContent = e; $('err').hidden = false; $('out').hidden = true; return; }
+    $('err').hidden = true; $('out').hidden = false;
+    var rows = [row('Forward', f)]; if (r) rows.push(row('Reverse', r));
+    $('tbl').innerHTML = '<tr><th>프라이머</th><th>① Wallace</th><th>② 기본 GC 식</th><th>③ Nearest-neighbor</th></tr>' + rows.map(function (x) { return x.html; }).join('');
+    if (rows.length === 2 && rows[0].nn && rows[1].nn) {
+      var d = Math.abs(rows[0].nn.tm - rows[1].nn.tm);
+      var lo = Math.min(rows[0].nn.tm, rows[1].nn.tm);
+      $('pair').hidden = false;
+      $('pair').innerHTML = '두 프라이머의 Tm 차이(③ 기준): <b>' + d.toFixed(1) + ' °C</b> ' + (d <= 3 ? '— 좋습니다.' : d <= 5 ? '— 조금 큽니다. 3 °C 이내가 좋아요.' : '— 너무 큽니다. 한쪽 길이를 조절하세요.') +
+        '<br>qPCR은 결합 온도 60 °C를 많이 쓰므로, 설계 기준 Tm이 두 프라이머 모두 60 °C 근처(58–62 °C)면 좋습니다.' +
+        '<br>일반 Taq PCR (변성·결합·연장 3단계)이라면 결합 온도(Ta)는 낮은 쪽 Tm − 5 °C ≈ <b>' + Math.round(lo - 5) + ' °C</b>';
+    } else $('pair').hidden = true;
+    var nn = rows[0].nn;
+    $('nnDetail').innerHTML = nn ? '<details><summary>Forward의 nearest-neighbor 쌍 ' + nn.steps.length + '개 보기</summary><div class="nn">' +
+      nn.steps.map(function (p) { var v = DNA.NN[p]; return '<span>' + DNA.NN_LABEL[p] + ' ' + v[0] + ' / ' + v[1] + '</span>'; }).join('') +
+      '</div><p class="hint">각 쌍의 ΔH(kcal/mol) / ΔS(cal/K·mol)를 모두 더하고, 양 끝 염기에 대한 시작 보정을 더합니다. 염 보정 후 Na⁺ 환산 농도 ' + nn.naEq.toFixed(0) + ' mM.</p></details>' : '';
+  }
+  $('go').addEventListener('click', run);
+  $('ex').addEventListener('click', function () { $('f').value = 'ACATTTGCTTCTGACACAACTGT'; $('r').value = 'TGAGCCAGGCCATCACTAAA'; run(); });
+  ['f', 'r'].forEach(function (id) { $(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') run(); }); });
+})();
+</script>
+</body>
+</html>

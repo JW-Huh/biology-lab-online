@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&a.host&&a.host!==location.host){a.target='_blank';a.rel='noopener';}});</script>
+<title>연결 PCR 프라이머 설계</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { border-bottom: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+th { background: #f6f8fb; font-size: 12.5px; color: var(--ink-soft); }
+td.m, th.m { font-family: var(--font-mono); white-space: nowrap; }
+tr.no td { background: var(--red-soft); }
+tr.yes td { background: #eafaf3; }
+tr.erow:hover td { filter: brightness(.97); }
+.detail { border: 1.5px solid var(--line); border-radius: 14px; background: #fbfcfe; padding: 14px 16px; margin-top: 12px; }
+.detail h3 { margin: 0 0 2px; font-size: 16.5px; }
+.detail .sub { font-size: 13px; color: var(--ink-soft); margin: 0 0 8px; }
+.detail pre { font: 12.5px/1.45 var(--font-mono); margin: 0; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+select { font: 15px var(--font-body); padding: 9px 10px; border: 1.5px solid var(--line); border-radius: 10px; background: #fbfcfe; width: 100%; }
+.two { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 14px; }
+@media (max-width: 620px) { .two { grid-template-columns: minmax(0,1fr); } }
+.seqbox { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 10px 12px; margin-top: 10px; }
+.seqbox pre { font: 13px/1.5 var(--font-mono); margin: 0; white-space: pre; }
+.tool { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; align-items: end; }
+@media (max-width: 560px) { .tool { grid-template-columns: minmax(0,1fr); } }
+.hiSite { background: #fff1b8; font-weight: 700; } .hiSpacer { background: #eef1f5; } .hiGene { background: #d9e8fb; }
+.chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 700; margin-right: 4px; }
+.chip.ok { background: var(--mint-soft); color: #1d6b52; }
+.chip.no { background: var(--red-soft); color: var(--red); }
+.chip.warn { background: #fdf3d6; color: #8a6d00; }
+.matrix td, .matrix th { text-align: center; padding: 5px 6px; font-size: 12.5px; }
+.matrix td.y { background: #eafaf3; color: #1d6b52; font-weight: 700; }
+.matrix td.n { background: var(--red-soft); color: var(--red); font-weight: 700; }
+.matrix th.rot { font-size: 11.5px; }
+.fig svg { width: 100%; height: auto; display: block; }
+.fig svg text { font-family: "Noto Sans KR", sans-serif; }
+.steps { counter-reset: s; margin: 0; padding: 0; list-style: none; }
+.steps > li { margin: 0 0 6px; padding-left: 1.5em; position: relative; }
+.steps > li::before { counter-increment: s; content: counter(s) '.'; position: absolute; left: 0; font-weight: 700; color: var(--blue); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home" href="index.html"><img src="chacha.png" alt="">11주차 · 도메인 교환 클로닝</a>
+    <nav class="nav">
+      <a href="plasmid.html">플라스미드</a><a href="domain.html">도메인 지도</a><a href="primer.html">설계 및 1차 PCR</a><a href="enzyme.html" aria-current="page">연결 PCR 프라이머</a><a href="sew.html">연결 PCR</a><a href="clone.html">클로닝</a>
+    </nav>
+  </div>
+
+  <h1>연결 PCR 프라이머 설계</h1>
+  <p class="lead">두 조각을 이어 붙인 뒤 양 끝에서 늘려 줄 <b>바깥 프라이머</b>를 만듭니다. 여기에는 벡터에 넣기 위한 <b>제한효소 자리</b>가 들어가야 하므로, 어떤 효소를 쓸지 먼저 정해야 합니다.</p>
+
+  <section class="panel">
+    <h2>1. 왜 프라이머를 새로 만드나</h2>
+    <ul style="margin:0 0 16px;padding-left:1.2em">
+      <li>1차 PCR에 쓴 프라이머에는 <b>제한효소 자리가 없습니다.</b> 자리가 없으면 자를 수 없고, 자를 수 없으면 벡터에 넣을 수 없습니다.</li>
+      <li>바깥 프라이머는 1차와 2차에서 <b>같은 자리</b>에 붙습니다. 그래서 1차 때부터 제한효소 자리를 얹어 두면 새로 만들 필요가 없고, 실제 실험에서는 그렇게 하는 경우도 많습니다.</li>
+      <li>오늘은 생각할 것을 하나씩 보려고 두 단계로 나눕니다. 1차에서는 <b>조각을 뜨는 일</b>만, 지금은 <b>벡터에 넣을 준비</b>만 합니다. 어느 쪽으로 해도 결과는 같습니다.</li>
+    </ul>
+
+    <h3 style="margin:0 0 6px">바깥 프라이머는 세 토막</h3>
+    <div class="fig" id="figParts"></div>
+    <ul style="margin:8px 0 16px;padding-left:1.2em">
+      <li><b>여분 염기 4–6개</b> — 제한효소는 DNA 맨 끝에 걸친 자리를 잘 자르지 못합니다. 효소가 붙잡을 자리를 앞에 만들어 주는 것입니다.</li>
+      <li><b>인식 서열 (recognition site) 6 염기</b> — 고른 효소의 서열을 그대로 적습니다. ATG 쪽과 종결코돈 쪽에 서로 다른 효소를 씁니다.</li>
+      <li><b>유전자에 붙는 부분</b> — 1차 PCR에 쓴 A-F 또는 B-R을 그대로 씁니다. 주형을 붙잡는 일은 이 부분만 합니다.</li>
+    </ul>
+
+    <h3 style="margin:0 0 6px">이렇게 하면 무엇이 생기나</h3>
+    <div class="fig" id="figUse"></div>
+    <ul style="margin:8px 0 0;padding-left:1.2em">
+      <li>연결 PCR 산물의 <b>양 끝에 제한효소 자리가 하나씩</b> 새겨집니다.</li>
+      <li>튀어나온 부분끼리 짝이 맞아야 이어집니다. 그래서 벡터와 삽입 조각을 <b>같은 효소</b>로 잘라야 합니다.</li>
+      <li>그 자리를 자르면 양쪽에 점착 말단이 생기고, <b>같은 두 효소로 자른 벡터</b>와 짝이 맞습니다.</li>
+      <li>두 효소가 서로 다르니 조각은 <b>한 방향으로만</b> 들어갑니다.</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2>2. 그러면 어떤 효소를 쓸까</h2>
+    <p style="margin-top:0">아무 효소나 쓸 수는 없습니다. 아래 네 가지를 차례로 확인합니다.</p>
+    <ol class="steps">
+      <li><b>넣을 서열 안에 그 인식 서열이 없어야 한다.</b> 있으면 자르는 과정에서 넣을 유전자가 함께 잘립니다.</li>
+      <li><b>방향이 맞아야 한다.</b> ATG 쪽과 종결코돈 쪽에 서로 다른 효소를 써서, 한 방향으로만 삽입되게 합니다.</li>
+      <li><b>말단 모양을 확인해야 한다.</b> 평활(blunt) 말단은 방향을 정해 주지 못하고, 벡터끼리 다시 연결되기도 쉽습니다.</li>
+      <li><b>두 효소의 반응 온도가 같아야 한다.</b> 온도가 다르면 한 반응에서 함께 처리할 수 없습니다.</li>
+    </ol>
+  </section>
+
+  <section class="panel">
+    <h2>3. 내가 넣을 서열 안에 자리가 있나</h2>
+    <ul class="hint" style="margin-top:0;padding-left:1.2em">
+      <li>①을 확인하는 단계입니다. 넣을 서열을 직접 붙여 넣고 「찾기」를 누르세요.</li>
+      <li>앞 단계(설계 및 1차 PCR)에서 범위를 정해 두었다면, 아래 단추로 그때 만든 키메라 서열을 불러올 수 있습니다.</li>
+    </ul>
+    <label class="field" for="ins">넣을 서열</label>
+    <textarea id="ins" spellcheck="false" placeholder="ATG..." style="height:220px;min-height:120px"></textarea>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="scan" type="button">찾기</button>
+      <button class="btn ghost" id="fillChim" type="button">앞 단계에서 정한 내 키메라 불러오기</button>
+    </div>
+    <div id="insErr" class="msg err" hidden></div>
+    <div class="tbl-wrap" style="margin-top:12px"><table id="insTable"></table></div>
+  </section>
+
+  <section class="panel">
+    <h2>4. pUC19의 MCS 효소</h2>
+    <p class="hint" style="margin-top:0">MCS 안에서 한 번만 자르는 효소만 추렸습니다. 줄 위에 마우스를 올리면 자르는 모양이 아래에 나옵니다.</p>
+    <div class="tbl-wrap"><table id="etable"></table></div>
+    <div class="detail" id="edetail"></div>
+    <p class="hint" id="enote"></p>
+  </section>
+
+  <section class="panel">
+    <h2>5. 두 효소를 한 통에 같이 넣을 수 있을까</h2>
+    <p class="hint" style="margin-top:0">제한효소는 각자 가장 잘 일하는 온도가 있습니다. 두 효소의 온도가 다르면 한 반응으로 끝낼 수 없고, 하나로 먼저 자르고 정제한 뒤 다른 하나로 다시 잘라야 합니다(순차 반응). ○는 같이 가능, ×는 불가입니다.</p>
+    <div class="tbl-wrap"><table class="matrix" id="mtable"></table></div>
+  </section>
+
+  <section class="panel">
+    <h2>6. 내가 쓸 두 효소</h2>
+    <p class="hint" style="margin-top:0">pUC19에서 lac 프로모터는 MCS의 <b>번호가 큰 쪽</b>에 있습니다. 그래서 ATG 쪽에 번호가 큰 효소를 쓰면 유전자가 프로모터와 같은 방향으로 들어갑니다.</p>
+    <div class="two">
+      <div><label class="field" for="eA">ATG 쪽 (키메라의 앞쪽)</label><select id="eA"></select></div>
+      <div><label class="field" for="eB">종결코돈 쪽 (키메라의 뒤쪽)</label><select id="eB"></select></div>
+    </div>
+    <div class="row" style="margin-top:14px"><button class="btn" id="judge" type="button">따져 보기</button></div>
+    <div id="verdict"></div>
+  </section>
+
+  <section class="panel" id="opPanel">
+    <h2>7. 바깥 프라이머 서열 정하기</h2>
+    <div class="seqbox"><pre id="opHow"></pre></div>
+
+    <h3 style="margin:20px 0 6px">역상보 바꾸기</h3>
+    <p class="hint" style="margin-top:0">윗가닥 서열을 넣으면 아래가닥 기준 5′→3′ 서열로 바꿔 줍니다. 어느 쪽에 무엇을 써야 할지는 직접 판단하세요.</p>
+    <div class="tool">
+      <div><label class="field" for="rcIn">윗가닥 서열</label><textarea id="rcIn" spellcheck="false" style="min-height:52px"></textarea></div>
+      <div><button class="btn" id="rcGo" type="button">역상보</button></div>
+    </div>
+    <div class="seqbox" id="rcBox" hidden><pre id="rcOut"></pre></div>
+
+    <div class="two" style="margin-top:18px">
+      <div><label class="field" for="outF">바깥 Forward (ATG 쪽)</label><textarea id="outF" spellcheck="false"></textarea></div>
+      <div><label class="field" for="outR">바깥 Reverse (종결코돈 쪽)</label><textarea id="outR" spellcheck="false"></textarea></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="opCheck" type="button">점검하기</button>
+      <button class="btn ghost" id="opFill" type="button">구조 다시 보기</button>
+    </div>
+    <div id="opOut"></div>
+  </section>
+
+  <footer class="foot">모든 계산은 이 브라우저 안에서만 이루어집니다. 차차 © 충남대학교</footer>
+</div>
+
+<script src="dna.js"></script>
+<script src="receptors.js"></script>
+<script src="puc19.js"></script>
+<script src="clone.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var D = DNA, C = CLONE;
+  var SAV = C.load();
+  var CHIM = (SAV.fragA && SAV.fragB) ? (SAV.fragA + SAV.fragB) : '';
+  var MCS = C.mcsEnzymes();
+  function countIn(seq, site) { var n = 0, i = seq.indexOf(site), at = []; while (i >= 0) { n++; at.push(i + 1); i = seq.indexOf(site, i + 1); } return { n: n, at: at }; }
+  function msg(cls, html) { return '<div class="msg ' + cls + '">' + html + '</div>'; }
+  function chip(k, t) { return '<span class="chip ' + k + '">' + t + '</span>'; }
+
+  var chosen = { a: null, b: null };   // 이 페이지에서 직접 고른 것만 그림에 쓴다
+
+  /* ── 그림: 세 토막 ── */
+  function drawParts() {
+    var a = chosen.a;
+    var W = 680, H = 128;
+    var g = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="바깥 프라이머의 세 토막">';
+    g += '<defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#1f5fbf"/></marker></defs>';
+    var x = 60, y = 34;
+    [{ w: 110, fill: '#e6ebf2', stroke: '#9aa6b4', tc: '#5b6878', t: '여분 염기', sub: '4~6' },
+     { w: 150, fill: '#ffd9d6', stroke: '#c8423b', tc: '#c8423b', t: a ? a.site : '인식 서열 6 염기', sub: a ? a.name : '아래에서 직접 고른다' },
+     { w: 290, fill: '#d9e8fb', stroke: '#1f5fbf', tc: '#17458c', t: '유전자에 붙는 부분', sub: 'A-F 또는 B-R' }
+    ].forEach(function (p) {
+      g += '<rect x="' + x + '" y="' + y + '" width="' + p.w + '" height="30" rx="6" fill="' + p.fill + '" stroke="' + p.stroke + '" stroke-width="1.5"/>';
+      g += '<text x="' + (x + p.w / 2) + '" y="' + (y + 20) + '" text-anchor="middle" font-size="12.5" font-weight="700" fill="' + p.tc + '" font-family="JetBrains Mono, monospace">' + p.t + '</text>';
+      g += '<text x="' + (x + p.w / 2) + '" y="' + (y + 48) + '" text-anchor="middle" font-size="11.5" fill="#9aa6b4">' + p.sub + '</text>';
+      x += p.w;
+    });
+    g += '<text x="20" y="' + (y + 20) + '" text-anchor="middle" font-size="12" fill="#5b6878">5′</text>';
+    g += '<text x="' + (x + 20) + '" y="' + (y + 20) + '" text-anchor="middle" font-size="12" fill="#5b6878">3′</text>';
+    g += '<line x1="60" y1="' + (y - 10) + '" x2="' + x + '" y2="' + (y - 10) + '" stroke="#c8d2dc"/>';
+    g += '<text x="' + (60 + (x - 60) / 2) + '" y="' + (y - 16) + '" text-anchor="middle" font-size="11.5" fill="#9aa6b4">바깥 프라이머 한 개</text>';
+    g += '<line x1="320" y1="' + (y + 62) + '" x2="' + x + '" y2="' + (y + 62) + '" stroke="#1f5fbf" stroke-width="2" marker-end="url(#ar2)"/>';
+    g += '<text x="' + (x - 10) + '" y="' + (y + 80) + '" text-anchor="end" font-size="11.5" fill="#1f5fbf">여기만 주형에 붙고, 여기서부터 늘어난다</text>';
+    g += '</svg>';
+    $('figParts').innerHTML = g;
+  }
+  function drawUse() {
+    var a = chosen.a, b = chosen.b;
+    var W = 680, H = 300;
+    var g = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="양 끝에 제한효소 자리가 생긴다">';
+    var nameA = a ? a.name : '효소 X', nameB = b ? b.name : '효소 Y';
+    // ① 산물
+    g += '<text x="0" y="13" font-size="12.5" font-weight="700" fill="#26354a">① 연결 PCR 산물 — 양 끝에 제한효소 자리가 붙어 있다</text>';
+    g += '<rect x="20" y="26" width="70" height="24" rx="5" fill="#ffd9d6" stroke="#c8423b" stroke-width="1.5"/>';
+    g += '<text x="55" y="42" text-anchor="middle" font-size="10.5" font-weight="700" fill="#c8423b">' + nameA + '</text>';
+    g += '<rect x="90" y="26" width="390" height="24" rx="5" fill="#1f5fbf"/>';
+    g += '<rect x="396" y="26" width="84" height="24" rx="5" fill="#2f9e7a"/>';
+    g += '<text x="240" y="42" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">삽입 조각</text>';
+    g += '<rect x="480" y="26" width="70" height="24" rx="5" fill="#ffd9d6" stroke="#c8423b" stroke-width="1.5"/>';
+    g += '<text x="515" y="42" text-anchor="middle" font-size="10.5" font-weight="700" fill="#c8423b">' + nameB + '</text>';
+    g += '<path d="M55 54 L55 70" stroke="#c8423b" stroke-width="2"/><path d="M515 54 L515 70" stroke="#c8423b" stroke-width="2"/>';
+
+    // ② 자른 뒤 — 이중가닥으로 그려 어긋난 말단을 보인다
+    g += '<text x="0" y="98" font-size="12.5" font-weight="700" fill="#26354a">② 두 효소로 자르면 양 끝이 어긋나게 잘린다 (점착 말단)</text>';
+    var yT = 140, yB = 158, L1 = 150, R1 = 500, OV = 18;
+    g += '<rect x="' + (L1 - OV) + '" y="' + (yT - 7) + '" width="' + (R1 + OV - L1 + OV) + '" height="' + (yB - yT + 14) + '" rx="4" fill="#eef4fd"/>';
+    g += '<line x1="' + (L1 - OV) + '" y1="' + yT + '" x2="' + R1 + '" y2="' + yT + '" stroke="#1f5fbf" stroke-width="6" stroke-linecap="butt"/>';
+    g += '<line x1="' + L1 + '" y1="' + yB + '" x2="' + (R1 + OV) + '" y2="' + yB + '" stroke="#7aa6e8" stroke-width="6" stroke-linecap="butt"/>';
+    g += '<text x="' + (L1 - OV - 8) + '" y="' + (yT + 4) + '" text-anchor="end" font-size="10.5" fill="#5b6878">5′</text>';
+    g += '<text x="' + (R1 + OV + 8) + '" y="' + (yB + 4) + '" font-size="10.5" fill="#5b6878">5′</text>';
+    // 튀어나온 부분 표시는 위아래로 충분히 떨어뜨린다
+    g += '<line x1="' + (L1 - OV + 9) + '" y1="' + (yT - 9) + '" x2="' + (L1 - OV + 9) + '" y2="' + (yT - 20) + '" stroke="#17458c" stroke-width="1.2"/>';
+    g += '<text x="' + (L1 - OV + 9) + '" y="' + (yT - 25) + '" text-anchor="middle" font-size="10.5" fill="#17458c">튀어나온 부분</text>';
+    g += '<line x1="' + (R1 + OV - 9) + '" y1="' + (yB + 9) + '" x2="' + (R1 + OV - 9) + '" y2="' + (yB + 20) + '" stroke="#17458c" stroke-width="1.2"/>';
+    g += '<text x="' + (R1 + OV - 9) + '" y="' + (yB + 32) + '" text-anchor="middle" font-size="10.5" fill="#17458c">튀어나온 부분</text>';
+    g += '<text x="' + ((L1 + R1) / 2) + '" y="' + (yT - 25) + '" text-anchor="middle" font-size="11.5" font-weight="700" fill="#17458c">한 가닥만 튀어나온 양 끝</text>';
+
+    // ③ 벡터와 맞물린다
+    g += '<text x="0" y="214" font-size="12.5" font-weight="700" fill="#26354a">③ 같은 두 효소로 자른 벡터와 짝이 맞아 한 방향으로만 들어간다</text>';
+    var yT2 = 252, yB2 = 270, VL = 20, VR = 660, IL = 190, IR = 490;
+    g += '<text x="' + ((VL + IL) / 2) + '" y="' + (yT2 - 12) + '" text-anchor="middle" font-size="11" fill="#5b6878">벡터</text>';
+    g += '<text x="' + ((IL + IR) / 2) + '" y="' + (yT2 - 12) + '" text-anchor="middle" font-size="11" font-weight="700" fill="#1f5fbf">삽입 조각</text>';
+    g += '<text x="' + ((IR + VR) / 2) + '" y="' + (yT2 - 12) + '" text-anchor="middle" font-size="11" fill="#5b6878">벡터</text>';
+    g += '<line x1="' + VL + '" y1="' + yT2 + '" x2="' + (IL - OV) + '" y2="' + yT2 + '" stroke="#26354a" stroke-width="6"/>';
+    g += '<line x1="' + VL + '" y1="' + yB2 + '" x2="' + IL + '" y2="' + yB2 + '" stroke="#8e9aa8" stroke-width="6"/>';
+    g += '<line x1="' + (IL - OV) + '" y1="' + yT2 + '" x2="' + IR + '" y2="' + yT2 + '" stroke="#1f5fbf" stroke-width="6"/>';
+    g += '<line x1="' + IL + '" y1="' + yB2 + '" x2="' + (IR + OV) + '" y2="' + yB2 + '" stroke="#7aa6e8" stroke-width="6"/>';
+    g += '<line x1="' + IR + '" y1="' + yT2 + '" x2="' + VR + '" y2="' + yT2 + '" stroke="#26354a" stroke-width="6"/>';
+    g += '<line x1="' + (IR + OV) + '" y1="' + yB2 + '" x2="' + VR + '" y2="' + yB2 + '" stroke="#8e9aa8" stroke-width="6"/>';
+    g += '</svg>';
+    $('figUse').innerHTML = g;
+  }
+  drawParts(); drawUse();
+  C.attachGrip($('ins'), 120);
+
+  /* ── 3. 넣을 서열 검사 ──
+     여기서 직접 찾아보기 전에는 4번 표의 마지막 칸을 비워 둔다. */
+  var scanned = '';
+  function scanTable(s) {
+    $('insTable').innerHTML = '<tr><th>MCS 효소</th><th class="m">인식 서열</th><th class="m">pUC19 위치</th><th>넣을 서열 안에서</th><th>쓸 수 있나</th></tr>' +
+      MCS.map(function (v) {
+        var hit = countIn(s, v.enzyme.site);
+        return '<tr class="' + (hit.n ? 'no' : 'yes') + '"><td><b>' + v.name + '</b></td>' +
+          '<td class="m">' + v.enzyme.site + '</td><td class="m">' + v.pos + '번</td>' +
+          '<td class="m">' + (hit.n ? hit.n + '곳 · ' + hit.at.slice(0, 4).map(function (p) { return p.toLocaleString(); }).join(', ') + (hit.n > 4 ? ' …' : '') + '번' : '없음') + '</td>' +
+          '<td>' + (hit.n ? chip('no', '안 됨') + '넣을 서열이 잘린다' : chip('ok', '됨')) + '</td></tr>';
+      }).join('') +
+      '<tr><td colspan="5" class="hint">길이 ' + s.length.toLocaleString() + ' bp · GC ' + D.gcPercent(s).toFixed(1) + '%. 6 염기짜리 인식 서열이 이만한 서열 안에 우연히 들어 있을 확률은 상당히 높습니다.</td></tr>';
+  }
+  $('insTable').innerHTML = '<tr><td class="hint">넣을 서열을 붙여 넣고 「찾기」를 누르세요.</td></tr>';
+  $('fillChim').addEventListener('click', function () {
+    if (!CHIM) { $('insErr').textContent = '앞 단계에서 정한 키메라가 없습니다. 설계 및 1차 PCR을 먼저 통과하세요.'; $('insErr').hidden = false; return; }
+    $('ins').value = CHIM; scanned = CHIM; scanTable(CHIM); drawEtable(); $('insErr').hidden = true;
+  });
+  $('scan').addEventListener('click', function () {
+    var s = D.clean($('ins').value), e = D.check(s);
+    if (e) { $('insErr').textContent = e; $('insErr').hidden = false; $('insTable').innerHTML = ''; return; }
+    $('insErr').hidden = true; scanned = s; scanTable(s); drawEtable();
+  });
+
+  /* ── 4. 효소 표 ── */
+  function drawEtable() {
+    $('etable').innerHTML = '<tr><th>효소</th><th class="m">인식 서열<br><span style="font-weight:400">recognition site</span></th><th>말단</th><th class="m">pUC19 위치</th><th class="m">반응 온도</th><th>내 서열 안에</th></tr>' +
+      MCS.map(function (v) {
+        var e = v.enzyme, hit = countIn(scanned, e.site);
+        return '<tr class="erow ' + (scanned ? (hit.n ? 'no' : 'yes') : '') + '" data-enz="' + e.name + '"><td><b>' + e.name + '</b></td>' +
+          '<td class="m">' + e.site + '</td><td>' + e.ends + '</td><td class="m">' + v.pos + '번</td><td class="m">' + e.temp + ' °C</td>' +
+          '<td>' + (scanned ? (hit.n ? chip('no', hit.n + '곳') : chip('ok', '없음')) : '<span class="hint">3번에서 찾기</span>') + '</td></tr>';
+      }).join('');
+    $('enote').innerHTML = scanned
+      ? '마지막 칸은 3번에서 찾은 결과입니다. ×인 효소는 후보에서 빠집니다.'
+      : '마지막 칸은 3번에서 넣을 서열을 직접 찾아본 뒤에 채워집니다.';
+  }
+  drawEtable();
+  var EDEF = '<p class="sub" style="margin:0">줄 위에 마우스를 올리면 그 효소가 어떻게 자르는지 여기에 나옵니다.</p>';
+  $('edetail').innerHTML = EDEF;
+  $('etable').addEventListener('mouseover', function (ev) {
+    var t = ev.target.closest('tr[data-enz]'); if (!t) return;
+    var e = C.enz(t.dataset.enz), hit = countIn(scanned, e.site);
+    $('edetail').innerHTML = '<h3>' + e.name + '</h3>' +
+      '<p class="sub">인식 서열 (recognition site) ' + e.site + ' · ' + e.ends + ' 말단 · ' + e.temp + ' °C</p>' +
+      '<pre>' + C.cutPicture(e) + '</pre>' +
+      '<p style="margin:10px 0 0;font-size:14px">' + (e.ends === '평활'
+        ? '위아래 가닥을 같은 자리에서 자릅니다. 튀어나온 꼬리가 없습니다.'
+        : '위아래 가닥을 어긋나게 자릅니다. 한 가닥만 튀어나온 꼬리가 남고, 같은 효소로 자른 DNA끼리 짝이 맞습니다.') + '</p>' +
+      (scanned ? '<p style="margin:6px 0 0;font-size:14px">내 서열 안에 ' + (hit.n ? '<b>' + hit.n + '곳</b> 있습니다.' : '없습니다.') + '</p>' : '');
+  });
+  $('etable').addEventListener('mouseleave', function () { $('edetail').innerHTML = EDEF; });
+
+  /* ── 5. 동시 반응 표 ── */
+  (function () {
+    var names = MCS.map(function (v) { return v.name; });
+    var h = '<tr><th></th>' + names.map(function (n) { return '<th class="rot">' + n + '</th>'; }).join('') + '</tr>';
+    names.forEach(function (a) {
+      h += '<tr><th style="text-align:left">' + a + '</th>' + names.map(function (b) {
+        if (a === b) return '<td style="color:#c8d2dc">–</td>';
+        var r = C.canCombine(C.enz(a), C.enz(b));
+        return '<td class="' + (r.ok ? 'y' : 'n') + '" title="' + r.why.replace(/"/g, '') + '">' + (r.ok ? '○' : '×') + '</td>';
+      }).join('') + '</tr>';
+    });
+    $('mtable').innerHTML = h;
+  })();
+
+  /* ── 6. 두 효소 고르기 ── */
+  var opts = MCS.map(function (v) { return '<option value="' + v.name + '">' + v.name + ' · ' + v.enzyme.site + ' · ' + v.pos + '번</option>'; }).join('');
+  $('eA').innerHTML = '<option value="">고르세요</option>' + opts;
+  $('eB').innerHTML = '<option value="">고르세요</option>' + opts;
+  function posOf(name) { return MCS.filter(function (v) { return v.name === name; })[0].pos; }
+
+  $('judge').addEventListener('click', function () {
+    var na = $('eA').value, nb = $('eB').value;
+    if (!na || !nb) { $('verdict').innerHTML = msg('err', '두 효소를 모두 고르세요.'); return; }
+    var a = C.enz(na), b = C.enz(nb), html = '', fatal = false;
+    [[a, 'ATG'], [b, '종결코돈']].forEach(function (p) {
+      var hit = countIn(CHIM, p[0].site);
+      if (hit.n) { fatal = true; html += msg('err', '<b>' + p[0].name + '</b>은(는) 쓸 수 없습니다. 인식 서열 ' + p[0].site + '가 내 키메라 ' + hit.at.slice(0, 3).map(function (x) { return x.toLocaleString(); }).join(', ') + '번에 ' + hit.n + '곳 있습니다.'); }
+    });
+    if (na === nb) { fatal = true; html += msg('err', '양쪽에 같은 효소를 쓰면 말단 모양이 같아서 유전자가 <b>거꾸로</b> 들어갈 수도 있습니다.'); }
+    [a, b].forEach(function (e) {
+      if (e.ends === '평활') html += msg('info', '<b>' + e.name + '</b>은(는) 평활 말단을 만듭니다. 어느 쪽으로든 붙으니 방향이 정해지지 않고, 벡터끼리 다시 연결되기도 쉽습니다. 같은 자리를 알아보는 다른 효소가 있는지 위 표를 보세요.');
+    });
+    if (na !== nb) {
+      var cc = C.canCombine(a, b);
+      if (!cc.ok) {
+        html += msg('err', '<b>한 통에 같이 넣을 수 없습니다.</b> ' + cc.why +
+          '<br>방법은 두 가지입니다. ① ' + a.name + '으로 먼저 자르고 정제한 뒤 ' + b.name + '으로 다시 자르는 <b>순차 반응</b>을 합니다. ② 조건이 맞는 다른 효소로 바꿉니다.');
+        fatal = true;
+      } else if (!fatal) html += msg('ok', cc.why);
+    }
+    if (!fatal) {
+      var pa = posOf(na), pb = posOf(nb);
+      if (pa > pb) html += msg('ok', 'ATG 쪽(' + na + ', ' + pa + '번)이 종결 쪽(' + nb + ', ' + pb + '번)보다 번호가 큽니다. 유전자가 lac 프로모터와 <b>같은 방향</b>으로 들어갑니다.');
+      else { html += msg('err', 'ATG 쪽 효소의 번호(' + pa + ')가 종결 쪽(' + pb + ')보다 작습니다. 유전자가 프로모터와 <b>반대 방향</b>으로 들어갑니다. 두 효소를 서로 바꿔 보세요.'); fatal = true; }
+    }
+    if (!fatal) {
+      var removed = Math.abs(posOf(na) - posOf(nb));
+      html += msg('ok', '<b>이 조합으로 갑니다.</b> MCS에서 약 ' + removed + ' bp가 떨어져 나가고, 그 자리에 키메라가 들어갑니다. 완성된 플라스미드는 약 <b>' + (PUC19.seq.length - removed + CHIM.length + 20).toLocaleString() + ' bp</b>가 됩니다.');
+      C.save({ enzA: na, enzB: nb });
+      chosen.a = a; chosen.b = b;
+      showHow(a, b); drawParts(); drawUse();
+    } else $('opOut').innerHTML = '';
+    $('verdict').innerHTML = html;
+  });
+
+  /* ── 7. 바깥 프라이머 ── */
+  function showHow(a, b) {
+    var s = C.load();
+    var af = s.af || '(A-F를 아직 설계하지 않았습니다)', br = s.br || '(B-R을 아직 설계하지 않았습니다)';
+    $('opHow').innerHTML =
+      '바깥 Forward = <span class="hiSpacer">여분 염기 4~6</span> + <span class="hiSite">' + a.site + '</span> + <span class="hiGene">A-F 서열</span>\n' +
+      '                                   (' + a.name + ')\n' +
+      '   A-F = <span class="hiGene">' + af + '</span>\n\n' +
+      '바깥 Reverse = <span class="hiSpacer">여분 염기 4~6</span> + <span class="hiSite">' + b.site + '</span> + <span class="hiGene">B-R 서열</span>\n' +
+      '                                   (' + b.name + ')\n' +
+      '   B-R = <span class="hiGene">' + br + '</span>';
+  }
+  $('opHow').textContent = '위 6번에서 두 효소를 정하고 「따져 보기」를 누르면, 여기에 어떤 모양으로 적어야 하는지 나옵니다.';
+
+  $('rcGo').addEventListener('click', function () {
+    var s = D.clean($('rcIn').value), e = D.check(s);
+    $('rcBox').hidden = false;
+    if (e) { $('rcOut').textContent = e; return; }
+    var tm = C.tm(s);
+    $('rcOut').textContent = '넣은 서열 (5′→3′)\n  ' + s + '\n\n역상보 (5′→3′)\n  ' + D.rc(s) +
+      '\n\n길이 ' + s.length + ' nt · GC ' + D.gcPercent(s).toFixed(0) + '%' + (tm != null ? ' · Tm ' + tm.toFixed(1) + ' °C' : '');
+  });
+
+  $('opFill').addEventListener('click', function () {
+    var s = C.load();
+    if (!s.enzA || !s.enzB) { $('opOut').innerHTML = msg('err', '먼저 두 효소를 정하고 따져 보기를 누르세요.'); return; }
+    showHow(C.enz(s.enzA), C.enz(s.enzB));
+    $('opOut').innerHTML = msg('info', '위 모양대로 직접 적어 보세요.');
+  });
+
+  $('opCheck').addEventListener('click', function () {
+    var s = C.load();
+    if (!s.enzA || !s.enzB) { $('opOut').innerHTML = msg('err', '먼저 두 효소를 정하세요.'); return; }
+    if (!s.af || !s.br) { $('opOut').innerHTML = msg('err', '1차 PCR 프라이머(A-F, B-R)가 저장되어 있지 않습니다. <a href="primer.html">설계 및 1차 PCR</a>을 먼저 통과하세요.'); return; }
+    var a = C.enz(s.enzA), b = C.enz(s.enzB);
+    var F = D.clean($('outF').value), Rv = D.clean($('outR').value);
+    if (!F || !Rv) { $('opOut').innerHTML = msg('err', '두 프라이머를 모두 넣어 주세요.'); return; }
+    var html = '', good = true;
+    [[F, a, s.af, '바깥 Forward'], [Rv, b, s.br, '바깥 Reverse']].forEach(function (p) {
+      var seq = p[0], e = p[1], gene = p[2], label = p[3], sub = [], fail = false;
+      var i = seq.indexOf(e.site);
+      if (i < 0) { good = false; html += msg('err', label + '에 ' + e.name + ' 인식 서열(' + e.site + ')이 없습니다.'); return; }
+      if (countIn(seq, e.site).n > 1) { good = false; fail = true; html += msg('err', label + '에 ' + e.site + '가 두 번 이상 들어 있습니다. 한 번만 두세요.'); }
+      if (i < 3) html += msg('info', label + ': 인식 서열 앞 여분 염기가 ' + i + '개뿐입니다. 4–6개를 두세요.');
+      if (i > 10) html += msg('info', label + ': 여분 염기가 ' + i + '개입니다. 불필요하게 길면 프라이머 합성 비용만 올라갑니다.');
+      var after = seq.slice(i + e.site.length);
+      if (after.indexOf(gene.slice(0, 15)) !== 0) {
+        good = false; fail = true;
+        var nm = label.indexOf('Forward') > 0 ? 'A-F' : 'B-R';
+        var extra = '';
+        // 역상보를 한 번 더 뒤집어 넣은 경우가 가장 흔하다
+        if (after.indexOf(D.rc(gene).slice(0, 15)) === 0) {
+          extra = ' 넣은 것은 ' + nm + '의 <b>역상보</b>입니다. ' + nm + '이 어느 가닥을 읽는 프라이머였는지, 1차 PCR에서 어떻게 적었는지 다시 보세요.';
+        }
+        html += msg('err', label + ': 인식 서열 뒤에 ' + nm + ' 서열이 그대로 이어져야 합니다. 지금은 <span class="mono">' + (after.slice(0, 15) || '(없음)') + '</span>로 시작합니다.' + extra);
+      }
+      if (fail) return;
+      var tm = C.tm(gene);
+      sub.push('길이 ' + seq.length + ' nt');
+      if (tm != null) sub.push('주형에 붙는 부분 Tm ' + tm.toFixed(1) + ' °C');
+      html += msg('ok', label + ': ' + sub.join(' · '));
+    });
+    [a, b].forEach(function (e) {
+      if (countIn(CHIM, e.site).n) { good = false; html += msg('err', e.name + ' 자리가 키메라 안에 있습니다. 효소를 다시 고르세요.'); }
+    });
+    if (good) {
+      C.save({ outF: F, outR: Rv });
+      html += msg('ok', '<b>바깥 프라이머 두 개가 준비됐습니다.</b> 이제 두 조각을 이어 붙이고 이 프라이머로 늘립니다.');
+      html += '<div class="row" style="margin-top:12px"><a class="btn" href="sew.html">연결 PCR로 가기</a></div>';
+    }
+    $('opOut').innerHTML = html;
+  });
+})();
+</script>
+</body>
+</html>

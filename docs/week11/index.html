@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&a.host&&a.host!==location.host){a.target='_blank';a.rel='noopener';}});</script>
+<title>도메인 교환 클로닝 실습</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+.hero { display: flex; gap: 20px; align-items: center; margin: 12px 0 28px; }
+.hero img { width: 150px; flex: none; }
+@media (max-width: 520px) { .hero { flex-direction: column; text-align: center; } }
+.tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.tool { display: block; text-decoration: none; color: var(--ink); background: var(--panel); border: 2px solid var(--line); border-radius: 16px; padding: 18px; transition: border-color .15s, transform .15s; }
+.tool:hover { border-color: var(--blue); transform: translateY(-2px); }
+.tool .step { font: 700 12px/1 var(--font-body); color: var(--ink-soft); }
+.tool h2 { color: var(--blue); margin: 6px 0; }
+.tool p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
+.flow { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin: 20px 0 24px; }
+.flow svg { width: 100%; height: auto; display: block; }
+.flow svg text { font-family: "Noto Sans KR", sans-serif; }
+.weeks ul { margin: 8px 0 0; padding-left: 1.2em; }
+.weeks li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <img src="chacha.png" alt="돋보기를 든 생명시스템과학대학 차차">
+    <div>
+      <h1>도메인 교환 클로닝</h1>
+      <p class="lead" style="margin:0">생명과학실험2 11주차 · 두 수용체의 조각을 바꿔 끼운 유전자를 설계하고 플라스미드에 넣습니다. 설치 없이 브라우저에서 바로 씁니다.</p>
+    </div>
+  </div>
+
+  <div class="flow">
+    <svg viewBox="0 0 680 108" role="img" aria-label="실습 흐름">
+      <!-- 조각 A -->
+      <rect x="6" y="14" width="118" height="26" rx="6" fill="#1f5fbf"/>
+      <text x="65" y="31" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">TLR5 바깥 부분</text>
+      <rect x="6" y="56" width="118" height="26" rx="6" fill="#2f9e7a"/>
+      <text x="65" y="73" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">CD3ζ 막·안쪽</text>
+      <text x="65" y="98" text-anchor="middle" font-size="11" fill="#9aa6b4">1차 PCR 2개</text>
+
+      <path d="M130 48 L160 48" stroke="#9aa6b4" stroke-width="2" marker-end="url(#ar)"/>
+      <defs><marker id="ar" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 z" fill="#9aa6b4"/></marker></defs>
+
+      <rect x="168" y="34" width="150" height="26" rx="6" fill="#e8eef7" stroke="#1f5fbf"/>
+      <text x="243" y="51" text-anchor="middle" font-size="12" fill="#1f5fbf">겹치는 부분으로 이어 붙이기</text>
+      <text x="243" y="76" text-anchor="middle" font-size="11" fill="#9aa6b4">연결 PCR</text>
+
+      <path d="M324 48 L354 48" stroke="#9aa6b4" stroke-width="2" marker-end="url(#ar)"/>
+
+      <rect x="362" y="34" width="60" height="26" rx="6" fill="#1f5fbf"/>
+      <rect x="422" y="34" width="14" height="26" rx="3" fill="#f6c445"/>
+      <rect x="436" y="34" width="44" height="26" rx="6" fill="#2f9e7a"/>
+      <text x="421" y="76" text-anchor="middle" font-size="11" fill="#9aa6b4">키메라 수용체 유전자</text>
+
+      <path d="M486 48 L516 48" stroke="#9aa6b4" stroke-width="2" marker-end="url(#ar)"/>
+
+      <circle cx="570" cy="47" r="29" fill="none" stroke="#26354a" stroke-width="2.5"/>
+      <path d="M548 30 A29 29 0 0 1 592 32" fill="none" stroke="#1f5fbf" stroke-width="6"/>
+      <text x="570" y="51" text-anchor="middle" font-size="11" font-weight="700" fill="#26354a">pUC19</text>
+      <text x="570" y="96" text-anchor="middle" font-size="11" fill="#9aa6b4">제한효소로 끼워 넣기</text>
+    </svg>
+  </div>
+
+  <p class="lead" style="margin:-8px 0 18px"><a href="../index.html">← 생명과학실험2 온라인 실습</a></p>
+
+  <div class="tools">
+    <a class="tool" href="plasmid.html"><span class="step">Step 1</span><h2>플라스미드 뷰어</h2><p>pUC19 지도, 프로모터, 저항성 유전자, 제한효소 자리를 확인합니다.</p></a>
+    <a class="tool" href="domain.html"><span class="step">Step 2</span><h2>도메인 지도</h2><p>두 수용체의 기능과 도메인 경계를 확인합니다.</p></a>
+    <a class="tool" href="primer.html"><span class="step">Step 3</span><h2>설계 및 1차 PCR</h2><p>가져올 범위를 정하고, 프라이머 네 개를 설계해 PCR을 돌린 뒤 젤에서 잘라냅니다.</p></a>
+    <a class="tool" href="enzyme.html"><span class="step">Step 4</span><h2>연결 PCR 프라이머</h2><p>제한효소를 골라 양 끝 프라이머에 인식 서열을 붙입니다.</p></a>
+    <a class="tool" href="sew.html"><span class="step">Step 5</span><h2>연결 PCR</h2><p>천천히 식혀 두 조각을 연결하고, 양 끝 프라이머로 증폭합니다.</p></a>
+    <a class="tool" href="clone.html"><span class="step">Step 6</span><h2>클로닝 과정</h2><p>자르기부터 형질전환까지 한 단계씩 확인합니다.</p></a>
+  </div>
+
+  <div class="panel weeks" style="margin-top:24px">
+    <h2>따라하기 안내</h2>
+    <ul>
+      <li><a href="guide.html?doc=week11">11주차 · 도메인 교환 클로닝 따라하기</a></li>
+      <li><a href="guide.html?doc=worksheet">11주차 기록지</a></li>
+    </ul>
+    <p class="hint">10주차 도구(역상보, Tm 계산기, 프라이머 점검)는 <a href="../week10/index.html">10주차 페이지</a>에서 계속 쓸 수 있습니다.</p>
+  </div>
+
+  <footer class="foot">충남대학교 생명시스템과학대학 생명과학실험2 · 자료 문의 허지원 · 차차 © 충남대학교</footer>
+</div>
+</body>
+</html>

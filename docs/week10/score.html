@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&a.host&&a.host!==location.host){a.target='_blank';a.rel='noopener';}});</script>
+<title>프라이머 비교평가</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin-top: 12px; }
+@media (max-width: 560px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.total { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.total .n { font: 44px/1 var(--font-cute); color: var(--blue); }
+.total .n small { font-size: 20px; color: var(--ink-soft); }
+table.t { border-collapse: collapse; width: 100%; font-size: 14px; margin-top: 12px; }
+table.t td, table.t th { border-bottom: 1px solid var(--line); padding: 7px 9px; text-align: left; vertical-align: top; }
+table.t th { background: #f6f8fb; font-size: 12.5px; color: var(--ink-soft); }
+table.t td.m { font-family: var(--font-mono); font-size: 13px; }
+table.t td.p { font-family: var(--font-mono); font-weight: 700; white-space: nowrap; }
+.lv-ok { color: #1d6b52; } .lv-warn { color: #7a5a00; } .lv-bad { color: var(--red); }
+.tw { overflow-x: auto; }
+.res-list { display: grid; gap: 8px; margin-top: 12px; }
+.msg.warn { background: #fdf3d8; color: #7a5a00; }
+.record { font: 14px/1.7 var(--font-mono); background: #f6f8fb; border: 1px dashed var(--line); border-radius: 10px; padding: 12px 14px; white-space: pre-wrap; margin-top: 10px; }
+input[readonly], textarea[readonly] { background: #eef2f7; color: var(--ink-soft); }
+ol.steps { margin: 6px 0 0; padding-left: 1.3em; font-size: 14.5px; }
+ol.steps li { margin: 4px 0; }
+ul.refs { font-size: 13px; color: var(--ink-soft); margin: 8px 0 0; padding-left: 1.2em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home" href="index.html"><img src="chacha.png" alt="">프라이머 설계 실습</a>
+    <nav class="nav"><a href="pinball.html">유전자 핀볼</a><a href="align.html">엑손 찾기</a><a href="revcomp.html">역상보</a><a href="tm.html">Tm 계산기</a><a href="viewer.html">서열 뷰어</a><a href="check.html">프라이머 점검</a><a href="pcr.html">PCR 시뮬레이션</a><a href="score.html" aria-current="page">비교평가</a></nav>
+  </div>
+
+  <h1>프라이머 비교평가</h1>
+  <p class="lead">내가 설계한 프라이머 한 쌍을 100점 만점으로 평가합니다. 이 쌍으로 확정하면 같은 유전자에 대해 컴퓨터가 설계한 쌍이 나오고, 두 쌍을 항목별로, 같은 젤에서 비교합니다.</p>
+
+  <section class="panel">
+    <div class="grid" style="margin-top:0">
+      <div><label class="field" for="m">① mRNA 서열(NM_ FASTA)</label><textarea id="m" spellcheck="false" style="min-height:96px"></textarea></div>
+      <div><label class="field" for="g">② gDNA 서열(유전자 구간 FASTA)</label><textarea id="g" spellcheck="false" style="min-height:96px"></textarea></div>
+      <div><label class="field" for="fa">③ 내 Forward (5′→3′)</label><input type="text" id="fa" spellcheck="false" autocomplete="off"></div>
+      <div><label class="field" for="ra">④ 내 Reverse (5′→3′)</label><input type="text" id="ra" spellcheck="false" autocomplete="off"></div>
+    </div>
+    <div class="row" style="margin-top:14px"><button class="btn" id="go" type="button">평가하기</button></div>
+    <div id="err" class="msg err" hidden></div>
+  </section>
+
+  <section class="panel" id="out" hidden>
+    <div class="total"><span class="n" id="tot"></span><span id="grade"></span></div>
+    <div class="tw"><table class="t" id="tbl"></table></div>
+    <p class="hint">시뮬레이션 항목은 모든 학생에게 같은 표준 qPCR 프로그램으로 계산합니다.</p>
+
+    <div id="lockBox">
+      <h2 style="margin-top:20px">확정</h2>
+      <p style="margin:0">확정하면 이 쌍은 바꿀 수 없고, 컴퓨터가 설계한 쌍이 나옵니다. 확정 기록은 보고서에 그대로 옮깁니다.</p>
+      <div class="row" style="margin-top:10px"><button class="btn" id="lock" type="button">이 쌍으로 확정하기</button></div>
+    </div>
+  </section>
+
+  <section class="panel" id="after" hidden>
+    <h2>확정 기록</h2>
+    <div class="record" id="record"></div>
+
+    <h2 style="margin-top:22px">컴퓨터가 설계한 쌍과 비교</h2>
+    <div id="refInfo"></div>
+    <div class="tw"><table class="t" id="cmp"></table></div>
+    <div class="row" style="margin-top:12px"><a class="btn" id="toPcr" href="pcr.html#compare" hidden>PCR 시뮬레이션에서 두 쌍 같이 돌리기</a></div>
+
+    <div class="row" style="margin-top:22px"><button class="btn small ghost" id="reset" type="button">확정 기록 지우기</button><button class="btn small" id="reset2" type="button" hidden style="background:var(--red)">정말 지우기</button></div>
+  </section>
+
+  <section class="panel">
+    <h2>평가 기준</h2>
+    <p style="margin:0; font-size:14.5px">qPCR 프라이머 설계에서 널리 쓰는 기준(길이, GC, Tm, 3′ 끝, 2차 구조, 앰플리콘 길이)과 qPCR 보고 지침(MIQE), 이 실습의 PCR 시뮬레이션 결과를 합쳐 만든 기준입니다. 실제 실험에서 좋은 프라이머인지는 효율(희석 계열)과 Tm 곡선으로 다시 확인해야 합니다.</p>
+    <ul class="refs">
+      <li>Bustin SA et al. (2009) Clin Chem 55:611 (MIQE)</li>
+      <li>SantaLucia J (1998) PNAS 95:1460 · nearest-neighbor Tm</li>
+    </ul>
+  </section>
+
+  <footer class="foot">모든 계산은 이 브라우저 안에서만 이루어지고, 입력한 서열과 확정 기록은 이 브라우저에만 저장됩니다.</footer>
+</div>
+
+<script src="dna.js"></script>
+<script src="pcr-bg.js"></script>
+<script src="pcrsim.js"></script>
+<script src="ref-pairs.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var KEY = 'pdl-compare', SEED = 20261030, VIS = PCRSIM.VISIBLE_NG;
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function load() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } }
+  function save(o) { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} }
+
+  // 한 쌍 평가. 반환: { fatal, total, items:[{name, rule, value, pts, max}] }
+  function score(mRaw, M, G, F, R) {
+    if (!F || !R) return { fatal: 'Forward와 Reverse를 모두 넣어 주세요.' };
+    var e = DNA.check(F) || DNA.check(R); if (e) return { fatal: '프라이머: ' + e };
+    if (/[^ACGT]/.test(F + R)) return { fatal: '프라이머에는 A, C, G, T만 넣어 주세요.' };
+    var fa = M.indexOf(F), ra = M.indexOf(DNA.rc(R));
+    if (fa < 0) return { fatal: 'Forward가 mRNA에 그대로 있지 않습니다. mRNA 윗가닥 서열을 5′→3′로 넣었는지 확인하세요.' };
+    if (ra < 0) return { fatal: 'Reverse의 역상보가 mRNA에 없습니다. Reverse는 윗가닥 서열을 역상보로 바꿔 넣습니다.' };
+    var size = ra + R.length - fa;
+    if (size <= Math.max(F.length, R.length)) return { fatal: 'Reverse가 Forward보다 오른쪽(3′ 쪽)에 있어야 산물이 생깁니다.' };
+
+    var items = [], pr = [{ n: 'F', s: F }, { n: 'R', s: R }];
+    function add(name, rule, value, pts, max) { items.push({ name: name, rule: rule, value: value, pts: pts, max: max }); }
+    function per(name, rule, max, f) {
+      var v = [], p = 0;
+      pr.forEach(function (x) { var r = f(x.s); v.push(x.n + ' ' + r[0]); p += r[1]; });
+      add(name, rule, v.join(' · '), p, max);
+    }
+    per('길이', '18–24 nt', 6, function (s) { var L = s.length; return [L + ' nt', L >= 18 && L <= 24 ? 3 : (L >= 17 && L <= 26 ? 1 : 0)]; });
+    per('GC 비율', '40–60%', 6, function (s) { var g = DNA.gcPercent(s); return [g.toFixed(0) + '%', g >= 40 && g <= 60 ? 3 : (g >= 35 && g <= 65 ? 1 : 0)]; });
+    var tms = pr.map(function (x) { return DNA.tmNN(x.s, DNA.DESIGN).tm; });
+    per('Tm', '58–62 °C (③ 설계 기준)', 8, function (s) { var t = DNA.tmNN(s, DNA.DESIGN).tm, d = Math.abs(t - 60); return [t.toFixed(1) + ' °C', d <= 2 ? 4 : d <= 3 ? 2 : d <= 4 ? 1 : 0]; });
+    var dt = Math.abs(tms[0] - tms[1]);
+    add('Tm 차이', '2 °C 이내', dt.toFixed(1) + ' °C', dt <= 1 ? 5 : dt <= 2 ? 4 : dt <= 3 ? 1 : 0, 5);
+    per('3′ 끝', '마지막 5 nt 중 G/C 1–3개', 6, function (s) { var g = (s.substr(-5).match(/[GC]/g) || []).length; return ['G/C ' + g, g >= 1 && g <= 3 ? 3 : g === 0 ? 1 : 0]; });
+    per('반복 서열', '같은 염기 4개, 두 염기 4번 반복 없음', 4, function (s) {
+      var run = (s.match(/(A{4,}|C{4,}|G{4,}|T{4,})/) || [''])[0], di = /(AC|AG|AT|CA|CG|CT|GA|GC|GT|TA|TC|TG)\1{3,}/.test(s);
+      return [run ? run : di ? '두 염기 반복' : '없음', (run || di) ? 0 : 2];
+    });
+    per('머리핀', '60 °C에서 ΔG −1 kcal/mol보다 약함', 6, function (s) {
+      var h = PCRSIM.hairpinDG(s); if (!h) return ['없음', 3];
+      var g = PCRSIM.dG(h.dH, h.dS, 60); return ['줄기 ' + h.stem + ' bp, ' + g.toFixed(1), g >= -1 ? 3 : g >= -2 ? 1 : 0];
+    });
+    var worst = 0, wl = '';
+    [[F, R, 'F+R'], [F, F, 'F+F'], [R, R, 'R+R']].forEach(function (x) { var d = DNA.dimer(x[0], x[1]).best3.run || 0; if (d > worst) { worst = d; wl = x[2]; } });
+    add('3′ 끝 이합체', '3′ 끝끼리 3 bp 이하', worst ? wl + ' ' + worst + ' bp' : '없음', worst <= 3 ? 8 : worst === 4 ? 3 : 0, 8);
+    add('앰플리콘', '70–150 bp', size + ' bp', size >= 70 && size <= 150 ? 5 : (size > 150 && size <= 200) || (size >= 60 && size < 70) ? 1 : 0, 5);
+
+    var gene = PCRSIM.detectGene(mRaw, M);
+    var sim = PCRSIM.run({ M: M, G: G, gene: gene, geneLabel: gene, contam: true, seed: SEED, pairs: [{ name: 'A', F: F, R: R }] }).pairs[0];
+    var cd = sim.lanes[0], gl = sim.lanes.filter(function (l) { return l.name === 'gDNA'; })[0], ntc = sim.lanes[sim.lanes.length - 1];
+
+    // gDNA 구분
+    var A = DNA.exonAlign(M, G), ex = A.exons, fb = fa + F.length - 1, rb = ra + R.length - 1;
+    var spanF = DNA.exonOf(ex, fa) !== DNA.exonOf(ex, fb), spanR = DNA.exonOf(ex, ra) !== DNA.exonOf(ex, rb);
+    var gvis = gl ? gl.bands.filter(function (b) { return b.ng >= VIS && !b.dimer; }) : [];
+    var same = gvis.some(function (b) { return Math.abs(b.size - size) / size < 0.03; });
+    var gv = spanF || spanR ? (spanF && spanR ? '두 프라이머가' : spanF ? 'F가' : 'R이') + ' 엑손 경계에 걸침' : '경계에 안 걸침', gp;
+    if (!gvis.length) { gv += ', gDNA 산물 없음'; gp = spanF || spanR ? 20 : 12; }
+    else if (!same) { gv += ', gDNA 산물 ' + gvis.map(function (b) { return b.size; }).join(', ') + ' bp (크기 다름)'; gp = 6; }
+    else { gv += ', gDNA 산물 ' + size + ' bp (cDNA와 같은 크기, 구분 불가)'; gp = 0; }
+    add('gDNA 구분', 'gDNA에서 산물이 안 생김', gv, gp, 20);
+
+    // 특이성: cDNA 레인 산물 중 내 mRNA 산물의 비율
+    var tgtNg = 0, allNg = 0, others = {};
+    cd.bands.forEach(function (b) { b.parts.forEach(function (x) {
+      if (x.dimer) return;
+      allNg += x.ng;
+      var p = x.p;
+      if (p.tp.kind === 'target' && p.a.mis === 0 && p.b.mis === 0 && p.X.name !== p.Y.name) tgtNg += x.ng;
+      else if (x.ng >= 0.05) { var n = p.tp.kind === 'target' ? '내 mRNA의 다른 자리' : p.tp.contam ? '섞인 유전체' : p.tp.name; others[n] = 1; }
+    }); });
+    if (cd.smearNg >= 0.05) { allNg += cd.smearNg; others['여러 크기 비특이 산물'] = 1; }
+    var frac = allNg ? tgtNg / allNg : 0;
+    add('특이성', 'cDNA 산물이 모두 내 mRNA에서', Math.round(frac * 100) + '%' + (Object.keys(others).length ? ' (그 밖: ' + Object.keys(others).slice(0, 3).join(', ') + ')' : ''), frac >= 0.99 ? 16 : frac >= 0.95 ? 10 : frac >= 0.8 ? 4 : 0, 16);
+
+    var sp = 0, sv = [];
+    var ctOk = cd.ct && tgtNg >= VIS;
+    if (ctOk) { sp += cd.ct <= 24 ? 6 : cd.ct <= 26 ? 3 : cd.ct <= 28 ? 1 : 0; sv.push('cDNA Ct ' + cd.ct.toFixed(1) + (cd.ct > 24 ? ' (늦음)' : '')); } else sv.push('cDNA 산물 없음');
+    if (!ntc.ct) { sp += 4; sv.push('NTC 깨끗'); }
+    else { var d = cd.ct ? ntc.ct - cd.ct : 0; sp += d >= 15 ? 2 : 0; sv.push('NTC Ct ' + ntc.ct.toFixed(1)); }
+    add('시뮬레이션', 'cDNA Ct 24 이하, NTC 깨끗', sv.join(', '), sp, 10);
+
+    var total = items.reduce(function (a, b) { return a + b.pts; }, 0), cap = '';
+    // gDNA가 섞였을 때 cDNA와 같은 크기 산물이 나오면 qPCR 신호를 믿을 수 없으므로 상한을 둔다
+    if (same) { cap = 'gDNA에서 같은 크기 산물이 나와 최대 59점'; total = Math.min(total, 59); }
+    // 증폭이 너무 늦으면(효율이 낮으면) qPCR에 쓸 수 없다
+    else if (!ctOk || cd.ct > 28) { cap = (ctOk ? 'cDNA Ct가 28보다 늦어' : 'cDNA 산물이 없어') + ' 최대 64점'; total = Math.min(total, 64); }
+    return { total: total, items: items, gene: gene, size: size, tms: tms, cap: cap };
+  }
+  function grade(t) { return t >= 90 ? '아주 좋음' : t >= 80 ? '좋음' : t >= 65 ? '쓸 수는 있음' : '다시 설계'; }
+  function lv(p, m) { return p >= m ? 'lv-ok' : p >= m / 2 ? 'lv-warn' : 'lv-bad'; }
+
+  var cur = null;
+  function runA() {
+    var mRaw = $('m').value, M = DNA.clean(mRaw), G = DNA.clean($('g').value);
+    var e = DNA.check(M); if (e) return failA('mRNA: ' + e);
+    e = DNA.check(G); if (e) return failA('gDNA: ' + (G ? e : 'gDNA 서열을 넣어야 gDNA 구분 항목을 평가할 수 있어요.'));
+    var F = DNA.clean($('fa').value), R = DNA.clean($('ra').value);
+    var s = score(mRaw, M, G, F, R);
+    if (s.fatal) return failA(s.fatal);
+    $('err').hidden = true;
+    cur = { s: s, F: F, R: R, m: mRaw, g: $('g').value };
+    $('tot').innerHTML = s.total + '<small> / 100</small>';
+    $('grade').textContent = grade(s.total) + (s.gene ? ' · ' + s.gene : '') + ' · 앰플리콘 ' + s.size + ' bp' + (s.cap ? ' · ' + s.cap : '');
+    var h = '<tr><th>항목</th><th>기준</th><th>내 쌍</th><th>점수</th></tr>';
+    s.items.forEach(function (it) { h += '<tr><td>' + it.name + '</td><td>' + it.rule + '</td><td class="m">' + esc(it.value) + '</td><td class="p ' + lv(it.pts, it.max) + '">' + it.pts + ' / ' + it.max + '</td></tr>'; });
+    $('tbl').innerHTML = h;
+    $('out').hidden = false;
+  }
+  function failA(m) { $('err').innerHTML = m; $('err').hidden = false; $('out').hidden = true; }
+
+  function stamp(d) { function z(x) { return (x < 10 ? '0' : '') + x; } return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()); }
+  function lock(on) { ['m', 'g', 'fa', 'ra'].forEach(function (id) { $(id).readOnly = on; }); $('go').hidden = on; $('lockBox').hidden = on; }
+
+  function showAfter(st) {
+    $('record').textContent = '확정 ' + st.time + '\n유전자 ' + (st.gene || '?') + ' (' + (st.nm || '') + ')\nForward 5′-' + st.A.F + '-3′\nReverse 5′-' + st.A.R + '-3′\n앰플리콘 ' + st.size + ' bp · 점수 ' + st.scoreA + ' / 100';
+    $('after').hidden = false;
+    compare(st);
+  }
+
+  $('lock').addEventListener('click', function () {
+    if (!cur) return;
+    var gene = cur.s.gene, nm = gene ? window.PCR_BG.genes[gene].nm : ((cur.m.split(/\r?\n/)[0].match(/[NX]M_\d+\.\d+/) || [''])[0]);
+    var st = { locked: true, time: stamp(new Date()), gene: gene, nm: nm, A: { F: cur.F, R: cur.R }, size: cur.s.size, scoreA: cur.s.total, m: cur.m, g: cur.g };
+    var ref = gene && window.REF_PAIRS && window.REF_PAIRS[gene];
+    if (ref) st.B = { F: ref.F, R: ref.R };
+    save(st); lock(true); showAfter(st);
+    $('after').scrollIntoView({ behavior: 'smooth' });
+  });
+
+  function compare(st) {
+    if (!st.B) { $('refInfo').innerHTML = '<div class="msg warn">컴퓨터 설계 쌍은 핀볼의 8개 유전자에만 준비되어 있습니다.</div>'; return; }
+    var M = DNA.clean(st.m), G = DNA.clean(st.g), F = st.B.F, R = st.B.R;
+    var b = score(st.m, M, G, F, R);
+    if (b.fatal) { $('refInfo').innerHTML = '<div class="msg err">' + b.fatal + '</div>'; return; }
+    var a = score(st.m, M, G, st.A.F, st.A.R);
+    var fa = M.indexOf(F), ra = M.indexOf(DNA.rc(R));
+    $('refInfo').innerHTML = '<div class="record">컴퓨터 설계 쌍(' + esc(st.gene) + ')\nForward 5′-' + F + '-3′  mRNA ' + (fa + 1) + '–' + (fa + F.length) + '\nReverse 5′-' + R + '-3′  mRNA ' + (ra + R.length) + '–' + (ra + 1) + '\n앰플리콘 ' + b.size + ' bp · 점수 ' + b.total + ' / 100</div>';
+    st.scoreB = b.total; save(st);
+    var h = '<tr><th>항목</th><th>배점</th><th>내 쌍</th><th>컴퓨터 설계 쌍</th></tr>';
+    a.items.forEach(function (it, i) {
+      var jt = b.items[i];
+      h += '<tr><td>' + it.name + '</td><td class="m">' + it.max + '</td><td><span class="p ' + lv(it.pts, it.max) + '">' + it.pts + '</span> <span class="hint">' + esc(it.value) + '</span></td><td><span class="p ' + lv(jt.pts, jt.max) + '">' + jt.pts + '</span> <span class="hint">' + esc(jt.value) + '</span></td></tr>';
+    });
+    h += '<tr><td><b>합계</b></td><td class="m">100</td><td class="p">' + a.total + (a.cap ? ' <span class="hint">(' + a.cap + ')</span>' : '') + '</td><td class="p">' + b.total + (b.cap ? ' <span class="hint">(' + b.cap + ')</span>' : '') + '</td></tr>';
+    $('cmp').innerHTML = h;
+    $('toPcr').hidden = false;
+  }
+
+  $('reset').addEventListener('click', function () { $('reset2').hidden = false; });
+  $('reset2').addEventListener('click', function () { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); });
+  $('go').addEventListener('click', runA);
+  ['fa', 'ra'].forEach(function (id) { $(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') runA(); }); });
+
+  var st = load();
+  if (st && st.locked) {
+    $('m').value = st.m || ''; $('g').value = st.g || ''; $('fa').value = st.A.F; $('ra').value = st.A.R;
+    runA(); lock(true); showAfter(st);
+  }
+})();
+</script>
+</body>
+</html>
