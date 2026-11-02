@@ -38,13 +38,13 @@ tr.dim td { color: #9aa6b4; }
 tr.erow:hover td { background: #eef4fd; }
 .seqwrap { border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 12px 14px; }
 .seqwrap pre { font: 12.5px/1.52 var(--font-mono); margin: 0; white-space: pre; }
-.seqwrap .num { color: #9aa6b4; }
+.seqwrap .num { color: #9aa6b4; -webkit-user-select: none; user-select: none; }
 .rs { background: #fef3c7; border-radius: 2px; cursor: pointer; }
 .rs.single { background: #d1fae5; }
 .rs.on { background: #f59e0b; color: #fff; }
-.lab { cursor: pointer; color: #5b6878; }
+.lab { cursor: pointer; color: #5b6878; -webkit-user-select: none; user-select: none; }
 .lab.on { color: #b45309; font-weight: 700; }
-.cut { color: #c8d2dc; }
+.cut { color: #c8d2dc; -webkit-user-select: none; user-select: none; }
 .cut.on { color: #ef4444; font-weight: 700; }
 .navrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; font-size: 14px; }
 .navrow select, .navrow input { font: 14px var(--font-mono); padding: 7px 9px; border: 1.5px solid var(--line); border-radius: 9px; background: #fbfcfe; }
@@ -372,10 +372,10 @@ details.panel > summary + * { margin-top: 12px; }
       return enz ? '<span class="cut" data-enz="' + enz + '">' + t + '</span>' : t;
     }) + '\n';
     function strandRow(str, label, numA, numB) {
-      return (numA != null ? String(numA).padStart(5, ' ') : '     ') + ' ' + label + ' ' + runs(mark, function (enz, a, b) {
+      return '<span class="num">' + (numA != null ? String(numA).padStart(5, ' ') : '     ') + ' ' + label + ' </span>' + runs(mark, function (enz, a, b) {
         var t = str.substring(a, b);
         return enz ? '<span class="rs' + (SINGLE[enz] ? ' single' : '') + '" data-enz="' + enz + '">' + t + '</span>' : t;
-      }) + (numB != null ? ' ' + numB : '');
+      }) + (numB != null ? '<span class="num"> ' + numB + '</span>' : '');
     }
     html += strandRow(top, "5′", from, to) + '\n';
     html += strandRow(bot, "3′", null, null) + '\n';
