@@ -9,8 +9,8 @@ import io, json, os, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WEEKS = [
-    ('week10', ['week10/README.md', 'week10/worksheet.md', 'week10/ncbi-guide.md']),
-    ('week11', ['week11/README.md', 'week11/worksheet.md']),
+    ('week10', ['README.md', 'worksheet.md', 'ncbi-guide.md']),
+    ('week11', ['README.md', 'worksheet.md']),
 ]
 
 for week, files in WEEKS:

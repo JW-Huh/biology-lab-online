@@ -52,8 +52,8 @@
 <script>
 (function () {
   var DOCS = {
-    week11: { file: 'week11/README.md', name: '11주차 따라하기' },
-    worksheet: { file: 'week11/worksheet.md', name: '기록지' }
+    week11: { file: 'README.md', name: '11주차 따라하기' },
+    worksheet: { file: 'worksheet.md', name: '기록지' }
   };
   var BY_FILE = { 'README.md': 'week11', 'worksheet.md': 'worksheet' };
   var key = new URLSearchParams(location.search).get('doc');
@@ -101,7 +101,7 @@
     document.title = (h1 ? h1.textContent : d.name);
     if (location.hash) { var t = document.getElementById(decodeURIComponent(location.hash.slice(1))); if (t) t.scrollIntoView(); }
   }).catch(function () {
-    document.getElementById('doc').innerHTML = '<p>안내문을 불러오지 못했습니다. <span class="mono">docs/' + d.file + '</span> 파일을 직접 열어 보세요.</p>';
+    document.getElementById('doc').innerHTML = '<p>안내문을 불러오지 못했습니다. <span class="mono">' + d.file + '</span> 파일을 직접 열어 보세요.</p>';
   });
 })();
 </script>
