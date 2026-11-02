@@ -15,8 +15,6 @@
 
 **제출물**: [기록지](worksheet.md)의 필수 항목을 갖춘 보고서를 사이버캠퍼스에 제출
 
-**웹 도구**: https://jw-huh.github.io/biology-lab-online/week10/
-
 ---
 
 ## Part 1. 이론
