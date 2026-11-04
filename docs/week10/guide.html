@@ -71,8 +71,8 @@
       var h = a.getAttribute('href');
       var m = h.match(/^(?:\.\/)?(README\.md|worksheet\.md|ncbi-guide\.md)(#.*)?$/);
       if (m) { a.setAttribute('href', 'guide.html?doc=' + BY_FILE[m[1]] + (m[2] || '')); return; }
-      var t = h.match(/^https:\/\/jw-huh\.github\.io\/[\w-]+\/(?:week\d+\/)?([\w-]+\.html.*)$/);
-      if (t) a.setAttribute('href', t[1]);
+      var t = h.match(/^https:\/\/jw-huh\.github\.io\/[\w-]+\/(?:week\d+\/)?([\w-]+\.html.*)?$/);
+      if (t) a.setAttribute('href', t[1] || 'index.html');
     });
     root.querySelectorAll('img[src]').forEach(function (im) {
       var s = im.getAttribute('src'), f = s.split('/').pop();

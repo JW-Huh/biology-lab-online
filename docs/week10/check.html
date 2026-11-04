@@ -73,8 +73,8 @@ pre.pic { font: 13px/1.35 var(--font-mono); background: #f6f8fb; border: 1px sol
   function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
 
   function block(name, s) {
-    var q = DNA.qc(s), nn = DNA.tmNN(s);
-    var html = '<div><h3>' + name + '</h3><div class="seqline">5′-' + s + '-3′' + (nn ? ' · Tm ' + nn.tm.toFixed(1) + ' °C' : '') + '</div>';
+    var q = DNA.qc(s), nn = DNA.tmNN(s, DNA.DESIGN);
+    var html = '<div><h3>' + name + '</h3><div class="seqline">5′-' + s + '-3′' + (nn ? ' · Tm ' + nn.tm.toFixed(1) + ' °C (설계 기준)' : '') + '</div>';
     q.items.forEach(function (it) {
       html += '<div class="item ' + it.level + '"><i class="dot">' + MARK[it.level] + '</i><div>' + esc(it.title) + (it.detail ? '<div class="d">' + esc(it.detail) + '</div>' : '') + '</div></div>';
     });
@@ -92,13 +92,13 @@ pre.pic { font: 13px/1.35 var(--font-mono); background: #f6f8fb; border: 1px sol
     $('err').hidden = true; $('out').hidden = false;
     $('res').innerHTML = (f ? block('Forward', f) : '') + (r ? block('Reverse', r) : '');
     if (f && r) {
-      var x = DNA.dimer(f, r), t1 = DNA.tmNN(f), t2 = DNA.tmNN(r);
+      var x = DNA.dimer(f, r), t1 = DNA.tmNN(f, DNA.DESIGN), t2 = DNA.tmNN(r, DNA.DESIGN);
       var lv = x.best3.run >= 4 ? 'bad' : x.best.run >= 6 ? 'warn' : 'ok';
       var dt = t1 && t2 ? Math.abs(t1.tm - t2.tm) : null;
-      var lv2 = dt === null ? 'ok' : dt <= 3 ? 'ok' : dt <= 5 ? 'warn' : 'bad';
+      var lv2 = dt === null ? 'ok' : dt <= 2 ? 'ok' : dt <= 5 ? 'warn' : 'bad';
       var html = '<h2 style="margin-top:18px">F와 R 사이</h2>';
       html += '<div class="item ' + lv + '"><i class="dot">' + MARK[lv] + '</i><div>F와 R이 서로 붙는 구간(cross-dimer): 최대 ' + x.best.run + ' bp' + (x.best3.run >= 3 ? ', 3′ 끝 포함 ' + x.best3.run + ' bp' : '') + '</div></div>';
-      if (dt !== null) html += '<div class="item ' + lv2 + '"><i class="dot">' + MARK[lv2] + '</i><div>두 Tm의 차이 ' + dt.toFixed(1) + ' °C <div class="d">3 °C 이내가 좋아요.</div></div></div>';
+      if (dt !== null) html += '<div class="item ' + lv2 + '"><i class="dot">' + MARK[lv2] + '</i><div>두 Tm의 차이 ' + dt.toFixed(1) + ' °C <div class="d">2 °C 이내가 좋아요.</div></div></div>';
       var d = x.best3.run >= 3 ? x.best3 : x.best;
       if (d.run >= 4) html += '<pre class="pic">' + esc(DNA.dimerPicture(f, r, d)) + '</pre>';
       $('pair').innerHTML = html;

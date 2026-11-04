@@ -145,7 +145,7 @@
     var items = [], L = s.length, gc = gcPercent(s);
     function add(level, title, detail) { items.push({ level: level, title: title, detail: detail }); }
 
-    add(L >= 18 && L <= 25 ? 'ok' : (L >= 15 && L <= 30 ? 'warn' : 'bad'), '길이 ' + L + ' nt', '권장 18–25 nt');
+    add(L >= 18 && L <= 24 ? 'ok' : (L >= 15 && L <= 30 ? 'warn' : 'bad'), '길이 ' + L + ' nt', '권장 18–24 nt');
     add(gc >= 40 && gc <= 60 ? 'ok' : (gc >= 30 && gc <= 70 ? 'warn' : 'bad'), 'GC 비율 ' + gc.toFixed(0) + '%', '권장 40–60%');
 
     var last5 = s.substr(-5), gc5 = count(last5, /[GC]/g), lastGC = /[GC]$/.test(s);

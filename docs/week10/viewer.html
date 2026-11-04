@@ -126,9 +126,9 @@ table.prog td.m { font-family: var(--font-mono); white-space: nowrap; }
     else chk('err', 'PCR 산물 ' + size + ' bp — qPCR은 70–150 bp가 좋아요. ' + (size < 70 ? '너무 짧으면 프라이머 이합체와 구분이 어렵습니다.' : '길면 한 사이클 안에 다 복제되지 않아 효율이 떨어집니다.'));
     if (tf && tr) {
       var lo = Math.min(tf.tm, tr.tm), hi = Math.max(tf.tm, tr.tm), d = Math.abs(tf.tm - tr.tm);
-      var tmOk = lo >= 57 && hi <= 63 && d <= 3;
+      var tmOk = lo >= 58 && hi <= 62 && d <= 2;
       chk(tmOk ? 'ok' : 'err', 'Tm (③ 설계 기준) Forward ' + tf.tm.toFixed(1) + ' °C, Reverse ' + tr.tm.toFixed(1) + ' °C, 차이 ' + d.toFixed(1) + ' °C' +
-        (tmOk ? ' — 결합 온도 60 °C에 맞습니다.' : ' — qPCR은 두 Tm이 모두 57–63 °C, 차이 3 °C 이내가 좋아요.'));
+        (tmOk ? ' — 결합 온도 60 °C에 맞습니다.' : ' — qPCR은 두 Tm이 모두 58–62 °C, 차이 2 °C 이내가 좋아요.'));
     }
 
     $('sum').innerHTML =

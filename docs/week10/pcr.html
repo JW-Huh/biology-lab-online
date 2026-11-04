@@ -118,7 +118,7 @@ ul.assume li { margin: 3px 0; }
     <ul class="assume">
       <li><b>시료</b>: cDNA 레인에는 내 mRNA 3,000 copies, 다른 유전자 전사체(BLAST로 찾은 비슷한 서열) 각 3,000 copies, 흔한 전사체(ACTB, GAPDH 등 10종) 3천–9만 copies가 들어 있습니다. gDNA 레인은 사람 유전체 약 10 ng(3,000 copies)에서 내 유전자 구간과 비슷한 유전자 구간, 반복 서열만 따로 계산합니다. "유전체 DNA가 조금 섞임"을 켜면 cDNA 레인에 유전체 30 copies가 더해집니다.</li>
       <li><b>결합</b>: 프라이머 3′ 끝 6 nt가 맞는 자리를 모두 찾고, 그 자리 전체의 결합 세기를 nearest-neighbor 값으로 계산합니다. 틀린 염기가 많을수록, 결합 온도가 높을수록 덜 붙습니다. 3′ 끝 가까이 틀린 염기가 있으면 붙어도 연장이 잘 안 됩니다.</li>
-      <li><b>나머지 전사체·유전체</b>: 실제 시료에는 위 서열 말고도 수만 종의 전사체와 30억 nt의 유전체가 있습니다. 이 서열을 다 넣을 수는 없어서, 프라이머 3′ 끝 6–16 nt가 우연히 맞는 자리의 수(4<sup>−k</sup>)와 그 결합 세기로 계산합니다. 결합 온도가 낮으면 이런 자리에도 붙어 여러 크기의 산물이 번져 보입니다.</li>
+      <li><b>나머지 전사체·유전체</b>: 실제 시료에는 위 서열 말고도 수만 종의 전사체와 30억 nt의 유전체가 있습니다. 이 서열을 다 넣을 수는 없어서, 프라이머 3′ 끝 6–16 nt가 우연히 맞는 자리의 수(염기 구성으로 보정한 4<sup>−k</sup>)와 그 결합 세기로 계산합니다. 결합 온도가 낮으면 이런 자리에도 붙어 여러 크기의 산물이 번져 보입니다.</li>
       <li><b>시간</b>: 결합 시간이 짧으면 프라이머가 다 붙기 전에 다음 단계로 넘어갑니다. 중합효소는 72 °C에서 1초에 약 20 nt를 만들고, 결합 단계에서도 느리게 연장합니다. 한 사이클에 갈 수 있는 거리보다 산물이 길면 끝까지 복제되지 않습니다. 변성 온도가 산물 Tm보다 충분히 높지 않거나 변성 시간이 너무 짧으면 가닥이 덜 떨어지고, 긴 산물일수록 더 그렇습니다. 초기 변성이 짧으면 hot-start 효소가 덜 깨어나 처음 몇 사이클이 약합니다.</li>
       <li><b>사이클</b>: 산물은 사이클마다 효율만큼 불어나다가, 산물이 약 300 ng 쌓이거나 프라이머가 떨어지면 더 늘지 않습니다(평탄기). 산물끼리는 효소와 프라이머를 나눠 씁니다.</li>
       <li><b>프라이머 이합체</b>: 두 프라이머 3′ 끝이 서로 붙는 세기에 따라 확률적으로 생기고, 한번 생기면 같이 증폭됩니다. 주형이 없는 NTC에서 가장 잘 보입니다.</li>
@@ -151,7 +151,7 @@ ul.assume li { margin: 3px 0; }
   var MIN_BP = 30, MAX_BP = 6000, VIS = PCRSIM.VISIBLE_NG;
 
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
-  function fail(msg) { $('err').innerHTML = msg; $('err').hidden = false; $('out').hidden = true; }
+  function fail(msg) { $('err').className = 'msg err'; $('err').innerHTML = msg; $('err').hidden = false; $('out').hidden = true; }
   function msg(parent, cls, html) { var d = document.createElement('div'); d.className = 'msg ' + cls; d.innerHTML = html; $(parent).appendChild(d); }
   function num(id) { return parseFloat($(id).value); }
   function fmtNg(x) { return x >= 10 ? x.toFixed(0) : x >= 1 ? x.toFixed(1) : x.toFixed(2); }

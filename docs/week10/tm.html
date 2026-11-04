@@ -88,7 +88,7 @@ summary { cursor: pointer; font-weight: 700; font-size: 14.5px; color: var(--blu
     var cond = { mono: num('c-mono', 50), mg: num('c-mg', 1.5), dntp: num('c-dntp', 0.8), primer: num('c-primer', 0.5) };
     var w = DNA.tmWallace(s), b = DNA.tmBasic(s), nn = DNA.tmNN(s, cond), pb = DNA.tmNN(s, DNA.DESIGN);
     return {
-      name: name, s: s, nn: nn,
+      name: name, s: s, nn: nn, pb: pb,
       html: '<tr><td><b>' + name + '</b><span class="f">' + s + '</span><span class="f">N=' + N + ', A+T=' + at + ', G+C=' + gc + '</span></td>' +
         '<td class="num">' + w.toFixed(0) + ' °C<span class="f">2×' + at + ' + 4×' + gc + '</span></td>' +
         '<td class="num">' + b.toFixed(1) + ' °C<span class="f">64.9 + 41×(' + gc + '−16.4)/' + N + '</span></td>' +
@@ -105,10 +105,10 @@ summary { cursor: pointer; font-weight: 700; font-size: 14.5px; color: var(--blu
     var rows = [row('Forward', f)]; if (r) rows.push(row('Reverse', r));
     $('tbl').innerHTML = '<tr><th>프라이머</th><th>① Wallace</th><th>② 기본 GC 식</th><th>③ Nearest-neighbor</th></tr>' + rows.map(function (x) { return x.html; }).join('');
     if (rows.length === 2 && rows[0].nn && rows[1].nn) {
-      var d = Math.abs(rows[0].nn.tm - rows[1].nn.tm);
+      var d = Math.abs(rows[0].pb.tm - rows[1].pb.tm);
       var lo = Math.min(rows[0].nn.tm, rows[1].nn.tm);
       $('pair').hidden = false;
-      $('pair').innerHTML = '두 프라이머의 Tm 차이(③ 기준): <b>' + d.toFixed(1) + ' °C</b> ' + (d <= 3 ? '— 좋습니다.' : d <= 5 ? '— 조금 큽니다. 3 °C 이내가 좋아요.' : '— 너무 큽니다. 한쪽 길이를 조절하세요.') +
+      $('pair').innerHTML = '두 프라이머의 Tm 차이(③ 설계 기준): <b>' + d.toFixed(1) + ' °C</b> ' + (d <= 2 ? '— 좋습니다.' : d <= 5 ? '— 조금 큽니다. 2 °C 이내가 좋아요.' : '— 너무 큽니다. 한쪽 길이를 조절하세요.') +
         '<br>qPCR은 결합 온도 60 °C를 많이 쓰므로, 설계 기준 Tm이 두 프라이머 모두 60 °C 근처(58–62 °C)면 좋습니다.' +
         '<br>일반 Taq PCR (변성·결합·연장 3단계)이라면 결합 온도(Ta)는 낮은 쪽 Tm − 5 °C ≈ <b>' + Math.round(lo - 5) + ' °C</b>';
     } else $('pair').hidden = true;
